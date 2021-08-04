@@ -3,6 +3,8 @@ var _audio2 = $('#soundTip')[0];
 var _record = $('#record')[0];
 var _video = $('#video')[0];
 var g_json;
+// var g_api = 'api/';
+var g_api = 'https://neysummer-api.glitch.me/';
 
 var g_cache = {
     logined: false,
@@ -233,7 +235,7 @@ function doAction(dom, action, params) {
                     alert('錯誤的url');
                     return;
                 }
-                $.getJSON('api/search.php?server=youtube&type=list&id=' + m, function(json, textStatus) {
+                $.getJSON(g_api+'search.php?server=youtube&type=list&id=' + m, function(json, textStatus) {
                     if (textStatus == 'success') {
                         queryMsg({ type: 'playlist_set', user: g_config.user.name, data: json });
                     }
@@ -247,7 +249,7 @@ function doAction(dom, action, params) {
                 if (m == '') {
                     return;
                 }
-                $.getJSON('api/search.php?server=youtube&type=id&id=' + m, function(json, textStatus) {
+                $.getJSON(g_api+'search.php?server=youtube&type=id&id=' + m, function(json, textStatus) {
                     if (textStatus == 'success') {
                         queryMsg({ type: 'video', user: g_config.user.name, data: json });
                     }
@@ -263,7 +265,7 @@ function doAction(dom, action, params) {
                 if (m == '') {
                     return;
                 }
-                $.getJSON('api/search.php?server=youtube&type=id&id=' + m, function(json, textStatus) {
+                $.getJSON(g_api+'search.php?server=youtube&type=id&id=' + m, function(json, textStatus) {
                     if (textStatus == 'success') {
                         queryMsg({ type: 'playlist_add', user: g_config.user.name, data: json });
                     }

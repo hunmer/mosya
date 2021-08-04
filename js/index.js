@@ -290,7 +290,7 @@ function doAction(dom, action, params) {
             }
             break;
         case 'playSong':
-            var src = 'api/search.php?server=youtube&type=url&id=' + $(dom).attr('data-vid');
+            var src = g_api+'search.php?server=youtube&type=url&id=' + $(dom).attr('data-vid');
             if (_audio.source != src) {
                 $('#audio_progress').css('width', '0%');
                 $('.progress-group-label').find('i').prop('class', 'fa fa-spinner text-primary font-size-16');
@@ -303,7 +303,7 @@ function doAction(dom, action, params) {
 
         case 'playVideo':
             var vid = $(dom).attr('data-vid');
-            var src = 'api/search.php?server=youtube&type=url&video=1&id=' + vid;
+            var src = g_api+'search.php?server=youtube&type=url&video=1&id=' + vid;
             if (_video.source != src) {
                 _video.vid = vid;
                 _video.poster = $(dom).find('img').attr('src');

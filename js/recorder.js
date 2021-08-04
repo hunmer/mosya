@@ -74,7 +74,7 @@ if (navigator.mediaDevices.getUserMedia) {
             };
         },
         () => {
-            alert("授权失败！");
+            //alert("授权失败！");
         }
     );
 } else {

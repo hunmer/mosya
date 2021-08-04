@@ -96,7 +96,7 @@
     <input id="input_preview" class='inputstyle' type="file" accept="image/*" onchange="var reader = new FileReader();reader.readAsDataURL(this.files[0]);reader.onload = (e) => {$('#img_uploadImage').attr('src', e.currentTarget.result).attr('title', this.files[0].name).show();$('#upload_title').val(this.files[0].name);}" />
     <input id="upload" class='inputstyle' type="file" accept="image/*" onchange="uploadImage()" />
     <input id="img_sendImage" class='inputstyle' type="file" accept="image/*" onchange="sendImage()" />
-    <audio id='soundTip'></audio>
+    <audio id='soundTip' autoplay></audio>
     <audio id='record' autoplay></audio>
     <audio id='audio' autoplay></audio>
     <!-- <div class="progress" style="height: 3px;z-index: 99999999;position: fixed;top: 0;width: 100%;">

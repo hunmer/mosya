@@ -665,8 +665,7 @@ function reviceMsg(data) {
                 }
             }
             closeModal('modal-custom', 'chat', () => {
-                console.log(dom);
-                $('#modal-custom .modal-html table').prepend(dom);
+                $('#modal-custom .modal-html table').prepend(dom.clone());
             });
             _record.btn = 'i[data-action="record_play"]';
             break;

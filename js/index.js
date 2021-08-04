@@ -29,7 +29,7 @@ $(function() {
 
 function init(){
     if(g_cache.inited) return;
-
+    g_cache.inited = true;
     $('body').show();
     initWebsock();
     _audio.onplay = () => {
@@ -506,6 +506,7 @@ function recon() {
 }
 
 function initWebsock() {
+    if(connection != undefined) connection.close();
     connection = new WebSocket(socket_url);
     connection.onopen = () => {
         g_cache.logined = true;

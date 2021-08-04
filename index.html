@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <meta name="theme-color" content="#000000">
+    <meta name="msapplication-navbutton-color" content="#000000">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#000000">
+    <meta name="description" content="模写が楽しい">
+    <meta name="author" content="">
+    <meta name="keywords" content="">
+    <link rel="icon" href="/static/halfmoon/img/halfmoon-fav-alt.png">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Security-Policy" content="block-all-mixed-content">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-touch-fullscreen" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="full-screen" content="yes">
+    <meta name="browsermode" content="application">
+    <meta name="x5-fullscreen" content="true">
+    <meta name="x5-page-mode" content="app">
+    <link rel="shortcut icon" href="favicon.ico">
+    <meta name="Author" contect="liaoyanjie2000@gmail.com">
+    <link rel="stylesheet" href="css/viewer.min.css">
+    <link rel="stylesheet" href="css/halfmoon.min.css">
+    <link rel="stylesheet" type="text/css" href="./css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/halfmoon-variables.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/index.css">
+    <title>模写が楽しい</title>
+</head>
+
+<body class="dark-mode with-custom-webkit-scrollbars with-custom-css-scrollbars" data-dm-shortcut-enabled="true" data-sidebar-shortcut-enabled="true" style="display: none;">
+    <div class="modal" id="modal-upload" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <a href="javascript: halfmoon.toggleModal('modal-upload')" class="btn close" role="button" aria-label="Close" >
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <h5 class="modal-title">アップロード</h5>
+                <div class="text-center">
+                    <img src="" id='img_uploadImage' class="img-fluid rounded" alt="" style="display: none;" data-action="previewImage">
+                    <button class="btn btn-block btn-primary mb-10 mt-10" onclick="$('#input_preview').click();">画像を選択</button>
+                </div>
+                <div class="form-group">
+                    <label for="username">テーマ</label>
+                    <input type="text" id="upload_title" class="form-control" placeholder="title">
+                </div>
+                <div class="form-group">
+                    <label for="password" class="required">時間制限</label>
+                    <select class="form-control" id="select-time" onchange="selectTime(this)">
+                        <option value="" selected disabled>選択してください</option>
+                        <option value="5">5min</option>
+                        <option value="10">10min</option>
+                        <option value="20">20min</option>
+                        <option value="30">30min</option>
+                        <option value="40">40min</option>
+                        <option value="60">60min</option>
+                        <option value="custom">カスタム</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary btn-block" id="btn_upload" onclick="uploadImage(this);">アップロードする</button>
+                <!-- <div class="text-right mt-10">
+                    <a href="#modal-2" class="hyperlink">Forgot password?</a>
+                </div> -->
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="modal-img" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content modal-content-media w-500">
+                <a href="javascript: halfmoon.toggleModal('modal-img')" class="close" role="button" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <img src="" class="img-fluid" title="modal-img" style='width: 100%;height: 100%;'>
+            </div>
+        </div>
+    </div>
+    <div class="modal modal-full" id="modal-custom" tabindex="-1" role="dialog" data-overlay-dismissal-disabled='...' data-esc-dismissal-disabled='...' style="z-index: 99999;">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content modal-content-media w-500">
+                <a href="#" class="close" role="button" aria-label="Close" onclick="halfmoon.toggleModal('modal-custom');$('.navbar-fixed-bottom').css('zIndex', 1);">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <h5 class="modal-title text-center">Title</h5>
+                <div class="modal-html">
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+    <input id="input_preview" class='inputstyle' type="file" accept="image/*" onchange="var reader = new FileReader();reader.readAsDataURL(this.files[0]);reader.onload = (e) => {$('#img_uploadImage').attr('src', e.currentTarget.result).attr('title', this.files[0].name).show();$('#upload_title').val(this.files[0].name);}" />
+    <input id="upload" class='inputstyle' type="file" accept="image/*" onchange="uploadImage()" />
+    <input id="img_sendImage" class='inputstyle' type="file" accept="image/*" onchange="sendImage()" />
+    <audio id='soundTip'></audio>
+    <audio id='record' autoplay></audio>
+    <audio id='audio' autoplay></audio>
+    <!-- <div class="progress" style="height: 3px;z-index: 99999999;position: fixed;top: 0;width: 100%;">
+        <div id='top_progress' class="progress-bar progress-bar-animated" role="progressbar" style="width: 20%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
+    </div> -->
+    <div id='cnt' onclick="if(_viewer.isShown) $('#ftb_icons').toggle();">
+        <span>00:00</span>
+    </div>
+    <div id="page-wrapper" class="page-wrapper with-navbar with-sidebar with-navbar-fixed-bottom with-transitions" data-sidebar-type="overlayed-sm-and-down" data-sidebar-hidden="hidden">
+        <!-- Sticky alerts -->
+        <div class="sticky-alerts">
+            <div id="FYsY6Z" class="alert dispose"><button class="close" data-dismiss="alert" type="button" aria-label="Close"><span aria-hidden="true">×</span></button>
+                <h4 class="alert-heading">Toast!</h4>This is a default alert with <a href="#" class="alert-link">a link</a> being toasted.
+            </div>
+        </div>
+        <!-- Navbar start -->
+        <nav class="navbar">
+            <div class="navbar-content">
+                <button id="toggle-sidebar-btn" class="btn btn-action" type="button" onclick="halfmoon.toggleSidebar()">
+                    <i class="fa fa-bars" aria-hidden="true"></i>
+                </button>
+            </div>
+            <a href="#" class="navbar-brand ml-10 ml-sm-20">
+                <!-- <img src="/static/site/img/fake-logo.svg" alt="fake-logo"> -->
+                <!-- <span class="d-none d-sm-flex">lyricRecorder</span> -->
+            </a>
+            <div class="navbar-content ml-auto">
+                <button class="btn btn-action mr-5" type="button" data-action="upload">
+                    <i class="fa fa-upload" aria-hidden="true"></i>
+                    <span class="sr-only">upload</span>
+                </button>
+                <!-- <a href="#" class="btn btn-primary" role="button">Get started</a> -->
+                <img id='img_user' data-action="previewImage" src="res/user.jpg" class="rounded-circle user-icon" alt="user">
+                <div id='status' class="bg-dark-light"></div>
+            </div>
+        </nav>
+        <div class="sidebar-overlay" onclick="halfmoon.toggleSidebar()"></div>
+        <div class="sidebar" style="z-index: 2100">
+            <!-- <div class="sidebar-menu">
+                <div class="sidebar-content">
+                    <input type="text" class="form-control" placeholder="Search">
+                    <div class="mt-10 font-size-12">
+                        Press <kbd>/</kbd> to focus
+                    </div>
+                </div>
+                <h5 class="sidebar-title">File</h5>
+                <div class="sidebar-divider"></div>
+                <a href="#" class="sidebar-link sidebar-link-with-icon" data-action="open">
+                    <span class="sidebar-icon">
+                        <i class="fa fa-file" aria-hidden="true"></i>
+                    </span>
+                    Open
+                </a>
+                <a href="#" class="sidebar-link sidebar-link-with-icon" data-action="export">
+                    <span class="sidebar-icon">
+                        <i class="fa fa-download" aria-hidden="true"></i>
+                    </span>
+                    Export
+                </a>
+                <br>
+                <h5 class="sidebar-title">Components</h5>
+                <div class="sidebar-divider"></div>
+                <a href="#" class="sidebar-link sidebar-link-with-icon">
+                    <span class="sidebar-icon">
+                        <i class="fa fa-folder-open-o" aria-hidden="true"></i>
+                    </span>
+                    File explorer
+                </a>
+                <a href="#" class="sidebar-link sidebar-link-with-icon">
+                    <span class="sidebar-icon">
+                        <i class="fa fa-table" aria-hidden="true"></i>
+                    </span>
+                    Spreadsheet
+                </a>
+                <a href="#" class="sidebar-link sidebar-link-with-icon">
+                    <span class="sidebar-icon">
+                        <i class="fa fa-map-o" aria-hidden="true"></i>
+                    </span>
+                    Map
+                </a>
+                <a href="#" class="sidebar-link sidebar-link-with-icon">
+                    <span class="sidebar-icon">
+                        <i class="fa fa-commenting-o" aria-hidden="true"></i>
+                    </span>
+                    Messenger
+                </a>
+            </div> -->
+            <div id='sidebar_icons_float'>
+                <div class="row mx-auto" style="width: 20%;">
+                    <div class="col-md-6">
+                        <a data-action="darkMode" href="#" class="btn btn-square btn-primary rounded-circle btn-lg" role="button"><i class="fa fa-moon-o" aria-hidden="true"></i></a>
+                        <a data-action="setting" href="#" class="btn btn-square btn-primary rounded-circle btn-lg" role="button"><i class="fa fa-cog" aria-hidden="true"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="content-wrapper" style="height: 90%">
+            <div class="container-fluid p-10" id="image_div" style="max-width: 100%;">
+                <div class="row row-eq-spacing-lg" style="width: 100%;text-align: center;">
+                    <div class="col-lg-9" id='content' style="margin: 0 auto;">
+                        <div>
+                            <img id="image" class='fullwidth' src="res/demo.jpg" alt="Picture">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="btn-toolbar p-5 bg-light-lm bg-very-dark-dm rounded" role="toolbar" aria-label="Another toolbar with button group and input group" id='tabs'>
+                <button class="btn btn-dark" data-action="fullContnet">
+                    <i class="fa fa-arrow-up" aria-hidden="true"></i>
+                </button>
+                <div class="btn-group mx-auto" role="group">
+                    <button class="btn btn-primary" type="button" data-action="toTab,chat">チャット
+                        <span class="badge badge-danger badge-pill" id='unread' style="display: none"></span>
+                    </button>
+                    <button class="btn" type="button" data-action="toTab,music">音楽</button>
+                    <button class="btn" type="button" data-action="toTab,video">動画</button>
+
+                </div>
+                <button class="btn btn-dark" data-action="playerList">
+                    <i class="fa fa-user" aria-hidden="true"></i>
+                    <span class="ml-2">1</span>
+                </button>
+            </div>
+            <div id="tabs_contents" style="margin-bottom: 200px">
+                <div id='content_chat' class='_content'>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th style="width: 65%;">メッセージ</th>
+                                <th class="text-right">送信時間</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!--  <tr>
+                          <th>
+                              <img src="res/maki.jpg" class="img-fluid rounded-circle user-icon" alt="maki">
+                          </th>
+                          <td>hello</td>
+                          <td class="text-right">20:17</td>
+                        </tr> -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id='content_music' class='_content hide'>
+                    <div class="row p-10" style="width: 100%">
+                        <div class="dropdown">
+                          <button class="btn" data-toggle="dropdown" type="button" id="dropdown-toggle-btn-1" aria-haspopup="true" aria-expanded="false">
+                            シェア <i class="fa fa-angle-down ml-5" aria-hidden="true"></i> 
+                          </button>
+                          <div class="dropdown-menu" aria-labelledby="dropdown-toggle-btn-1">
+                            <!-- <h6 class="dropdown-header">Share</h6> -->
+                            <a href="#" class="dropdown-item" data-action="playlist_add">曲リンク</a>
+                            <a href="#" class="dropdown-item" data-action="playlist_set">リストリンク</a>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-content">
+                              <button class="btn btn-block" type="button" onclick="window.open('https://www.youtube.com', '_blank')">Youtubeへ</button>
+                            </div>
+                          </div>
+                        </div>
+                    </div>
+
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th style="width: 70%;">曲</th>
+                                <!-- アーティスト -->
+                                <th class="text-right"></th>
+                            </tr>
+                        </thead>
+                        <!-- <tbody data-action="playSong" data-vid="kzZ6KXDM1RI">
+                             <tr>
+                          <th>
+                              <img src="res/maki.jpg" class="img-fluid rounded-circle user-icon" alt="maki">
+                          </th>
+                          <td>test</td>
+                          <td class="text-right">20:17</td>
+                        </tr>
+                        </tbody>
+                        <tbody data-action="playSong" data-vid="kNidScZjJoA">
+                             <tr>
+                          <th>
+                              <img src="res/maki.jpg" class="img-fluid rounded-circle user-icon" alt="maki">
+                          </th>
+                          <td>test</td>
+                          <td class="text-right">20:17</td>
+                        </tr>
+                        </tbody> -->
+                    </table>
+                </div>
+                <div id='content_video' class='_content hide'>
+                    <div class="row">
+                        <video id='video' class="col-12" src="" controls autoplay></video>
+                        <div class="col-12">
+                            <div class="btn-toolbar p-5 rounded" role="toolbar">
+                            <button class="btn btn-dark" onclick="window.open('https://www.youtube.com/watch?v='+_video.vid, '_blank');">
+                                <i class="fa fa-external-link-square" aria-hidden="true"></i>
+                            </button>
+                            <div class="btn-group mx-auto" role="group">
+                                <button class="btn btn-primary" type="button" data-btn="btn_videoHistory" data-action="tosubTab,video,videoHistory">履歴
+                                    <span class="badge badge-danger badge-pill hide" data-clickHide=1></span>
+                                </button>
+                                <!--  data-action="tosubTab,video,videoNote" -->
+                                <button class="btn" type="button" data-btn="btn_videoNote">メモ
+                                    <span class="badge badge-danger badge-pill hide"></span>
+                                </button>
+
+                                <button class="btn btn-dark" data-action="video_set">
+                                    <i class="fa fa-youtube-play" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            <button class="btn btn-dark" data-action="saveScreenshoot">
+                                <i class="fa fa-camera" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        </div>
+                        <div id='subContent_video' style="width: 100%;">
+                            <div class="subContent" id='subContent_videoHistory'>
+                                 <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th style="width: 50%;">動画</th>
+                                            <th>By</th>
+                                            <th class="text-right">発信</th>
+                                        </tr>
+                                    </thead>
+                                    <!-- <tbody data-action="playVideo" data-vid="kzZ6KXDM1RI">
+                                         <tr>
+                                       <th>
+                                          <img src="res/demo.jpg" class="cover" alt="maki">
+                                      </th>
+                                      <td>test</td>
+                                      <th>
+                                          <img src="res/maki.jpg" class="img-fluid rounded-circle user-icon" alt="maki">
+                                      </th>
+                                      <td class="text-right">20:17</td>
+                                    </tr>
+                                    </tbody> -->
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id='ftb_icons' style="display: none">
+            <button data-action="show_chat" class="btn btn-square bg-dark text-light" type="button">
+                <i class="fa fa-comment" aria-hidden="true"></i>
+                <span class="badge badge-danger badge-pill badge_rt" style="display: none"></span>
+            </button>
+            <button data-action="show_recorder" class="btn btn-square bg-dark text-light" type="button">
+                <i class="fa fa-microphone" aria-hidden="true"></i>
+            </button>
+            <button data-action="show_musicPlayer" class="btn btn-square bg-dark text-light" type="button">
+                <i class="fa fa-music" aria-hidden="true"></i>
+            </button>
+        </div>
+        <nav class="navbar navbar-fixed-bottom" style="height: 8%">
+            <div class="container-fluid">
+                <div id="bottom_chat" class="row toolbar" style="width: 100%;">
+                    <input type="text" id='msg' class="form-control col-8" placeholder="ここで入力する..." onkeydown="if(event.keyCode == 13) doAction(null, 'sendMsg')">
+                    <div class="col-4 text-center">
+                        <button class="btn col-5 btn-primary" type="button" data-action="sendImage">
+                            <i class="fa fa-picture-o" aria-hidden="true"></i>
+                        </button>
+                        <button class="btn col-5 btn-primary float-right" type="button" data-action="sendMsg">
+                            <i class="fa fa-paper-plane" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="bottom_video" class="row toolbar hide" style="width: 100%;">
+                    
+                </div>
+                <div id="bottom_music" class="row toolbar hide" style="width: 100%;">
+                    
+                   <div class="row" style="width: 100%">
+                        <div class="col-3">
+                            <img src="res/maki.jpg" class="rounded-circle cover" alt="maki">
+                        </div>
+                        
+                        <div class="col-9">
+                            <div class="row text-center icons">
+                                <div class="col-4">
+                                    <i data-action="audio_prev" class="fa fa-arrow-left" aria-hidden="true"></i>
+                                </div>
+
+                                <div class="col-4">
+                                    <i data-action="audio_play" class="fa fa-play" aria-hidden="true"></i>
+                                </div>
+
+                                <div class="col-4">
+                                    <i data-action="audio_next" class="fa fa-arrow-right" aria-hidden="true"></i>
+                                </div>
+                            </div>
+                            <div class="progress-group" style="position: relative;top: -7px;">
+                              <div class="progress col-12" style="height: 5px;width: 100%">
+                                <div class="progress-bar progress-bar-animated" id='audio_progress' role="progressbar" style="width: 0%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                              </div>
+                              <span class="progress-group-label">
+                                <i class="fa fa-spinner text-primary font-size-16"></i> 
+                              </span>
+                            </div>
+                        </div>
+
+                   </div>
+                </div>
+            </div>
+        </nav>
+    </div>
+    <script src="js/until.js"></script>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/halfmoon.min.js"></script>
+    <script src="js/viewer.min.js"></script>
+    <script src="js/recorder.js"></script>
+    <script src="js/index.js"></script>
+    <script type="text/javascript">
+    function toastAlert() {
+        var alertContent = "This is a default alert with <a href='#' class='alert-link'>a link</a> being toasted.";
+        halfmoon.initStickyAlert({
+            content: alertContent,
+            title: "Toast!"
+        })
+    }
+
+    function parentToggleDarkmode() {
+        window.parent.toggleDarkModeFromChild();
+    }
+    if (window !== window.parent) {
+        halfmoon.toggleDarkMode = parentToggleDarkmode;
+    }
+    </script>
+</body>
+
+</html>

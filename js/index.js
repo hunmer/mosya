@@ -10,9 +10,9 @@ var g_api = 'https://neysummer-api.glitch.me/';
 
 
 // var socket_url = 'ws://192.168.31.189:8000';
-var socket_url = 'ws://127.0.0.1:8000';
-var g_api = 'api/';
-var g_imageHost = 'http://127.0.0.1/mosya-websocket/';
+// var socket_url = 'ws://127.0.0.1:8000';
+// var g_api = 'api/';
+// var g_imageHost = 'http://127.0.0.1/mosya-websocket/';
 
 var g_cache = {
     logined: false,

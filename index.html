@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/halfmoon.min.css">
     <link rel="stylesheet" type="text/css" href="./css/font-awesome.min.css">
     <link rel="stylesheet" href="css/halfmoon-variables.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet">
+    <!-- <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet"> -->
     <link rel="stylesheet" href="css/index.css">
     <title>模写が楽しい</title>
 </head>
@@ -38,7 +38,7 @@
     <div class="modal" id="modal-upload" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
-                <a href="javascript: halfmoon.toggleModal('modal-upload')" class="btn close" role="button" aria-label="Close" >
+                <a href="javascript: halfmoon.toggleModal('modal-upload')" class="btn close" role="button" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </a>
                 <h5 class="modal-title">アップロード</h5>
@@ -47,21 +47,24 @@
                     <button class="btn btn-block btn-primary mb-10 mt-10" onclick="$('#input_preview').click();">画像を選択</button>
                 </div>
                 <div class="form-group">
-                    <label for="username">テーマ</label>
+                    <label for="username">タイトル</label>
                     <input type="text" id="upload_title" class="form-control" placeholder="title">
                 </div>
                 <div class="form-group">
                     <label for="password" class="required">時間制限</label>
-                    <select class="form-control" id="select-time" onchange="selectTime(this)">
-                        <option value="" selected disabled>選択してください</option>
-                        <option value="5">5min</option>
-                        <option value="10">10min</option>
-                        <option value="20">20min</option>
-                        <option value="30">30min</option>
-                        <option value="40">40min</option>
-                        <option value="60">60min</option>
-                        <option value="custom">カスタム</option>
-                    </select>
+                    <div class="row">
+                        <select class="form-control col-9" id="select-time" onchange="selectTime(this)">
+                            <option value="" selected disabled>選択してください</option>
+                            <option value="5">5min</option>
+                            <option value="10">10min</option>
+                            <option value="20">20min</option>
+                            <option value="30">30min</option>
+                            <option value="40">40min</option>
+                            <option value="60">60min</option>
+                            <option value="custom">カスタム</option>
+                        </select>
+                        <button class="btn btn-primary col-3 p-0 hide" data-action="addTime">延长する</button>
+                    </div>
                 </div>
                 <button class="btn btn-primary btn-block" id="btn_upload" onclick="uploadImage(this);">アップロードする</button>
                 <!-- <div class="text-right mt-10">
@@ -72,11 +75,20 @@
     </div>
     <div class="modal" id="modal-img" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
+             <h5 class="modal-title text-center mt-10"></h5>
             <div class="modal-content modal-content-media w-500">
                 <a href="javascript: halfmoon.toggleModal('modal-img')" class="close" role="button" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </a>
                 <img src="" class="img-fluid" title="modal-img" style='width: 100%;height: 100%;'>
+            </div>
+            <div id='modal_icons_float'>
+                <div class="row mx-auto" style="width: 20%;">
+                    <div class="col-md-6">
+                        <a data-action="downloadImageToServer" href="javascript:void(0)" class="btn btn-square btn-primary rounded-circle btn-lg" role="button"><i class="fa fa-upload" aria-hidden="true"></i></a>
+                        <a data-action="downloadImage" href="javascript:void(0)" class="btn btn-square btn-primary rounded-circle btn-lg" role="button"><i class="fa fa-download" aria-hidden="true"></i></a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -88,7 +100,67 @@
                 </a>
                 <h5 class="modal-title text-center">Title</h5>
                 <div class="modal-html">
-                    
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal modal-full" id="modal-stricker" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content modal-content-media w-500">
+                <a href="#" class="close" role="button" aria-label="Close" onclick="halfmoon.toggleModal('modal-stricker')">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div class="row w-full">
+                    <h5 class="modal-title text-center col-7">
+                        <span class="text-truncate"></span>
+                        <input type="text" style='display: none;max-width: unset;' class="form-control w-full" placeholder="キーワード&URL" onkeydown="if(event.keyCode == 13 && this.value != '') searchStrick(this.value);" value="">
+                    </h5>
+                    <i data-action="stricker_openURL" class="fa fa-external-link-square col-1 font-size-20 text-center" aria-hidden="true"></i>
+                    <i class="fa fa-trash-o col-1 font-size-20 text-center" aria-hidden="true" data-action="stricker_delete"></i>
+                    <i class="fa fa-arrow-left col-1 font-size-20 text-center" aria-hidden="true" data-action="stricker_left"></i>
+                    <i class="fa fa-arrow-right col-1 font-size-20 text-center" aria-hidden="true" data-action="stricker_right"></i>
+                    <i class="fa fa-search col-1 font-size-20 text-center" aria-hidden="true" data-action="show_stricker_search"></i>
+                </div>
+                <div class="modal-html">
+                    <div id='stricker_tabs' class="overflow-x-scroll overflow-y-hidden w-full h-50">
+                        <div class="w-auto h-50" style="display: flex">
+                            <button class="btn hide" data-action="stricker_toTab" data-id="search">
+                                <i class="fa fa-search" aria-hidden="true"></i>
+                            </button>
+                            <button class="btn" data-action="stricker_toTab" data-id="like">
+                                <i class="fa fa-heart" aria-hidden="true"></i>
+                            </button>
+                            <!-- <button class="btn">
+                            <img src='https://sdl-stickershop.line.naver.jp/products/0/0/1/9802/android/main.png'>
+                        </button> -->
+                        </div>
+                    </div>
+                    <div id='stricker_content' class="overflow-auto w-full h-200 mt-2" style="background-color: rgb(0 0 0 / 33%)">
+                        <div id='stricker_search' class="row w-full h-200 stricker_content" style="align-items: center;display: none;">
+                        </div>
+                        <div id='stricker_like' class="row w-full h-200 stricker_content" style="align-items: center;display: none;">
+                        </div>
+                    </div>
+                    <div id='stricker_footer' class="row w-full mt-10">
+                        <div class="col-4 p-10">
+                            <img class="border rounded" src='http://dl.stickershop.line.naver.jp/products/0/0/100/1/android/stickers/1.png'>
+                        </div>
+                        <div class="col-8">
+                            <div class="form-group">
+                                <label for="tags">タグ</label>
+                                <textarea class="form-control" id="tags" placeholder="可愛い,笑顔" oninput="stricker_saveTags(this)"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <div class="custom-switch">
+                                    <input type="checkbox" id="checkbox_like" onchange="likeStrickerImg(this)">
+                                    <label for="checkbox_like">お気に入り</label>
+                                </div>
+                                <button class="btn btn-primary float-right" type="button" data-action="sendStricker">
+                                    <i class="fa fa-paper-plane" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -97,12 +169,13 @@
     <input id="upload" class='inputstyle' type="file" accept="image/*" onchange="uploadImage()" />
     <input id="img_sendImage" class='inputstyle' type="file" accept="image/*" onchange="sendImage()" />
     <audio id='soundTip' autoplay></audio>
+    <audio id='audio_stricker' autoplay></audio>
     <audio id='record' autoplay></audio>
     <audio id='audio' autoplay></audio>
     <!-- <div class="progress" style="height: 3px;z-index: 99999999;position: fixed;top: 0;width: 100%;">
         <div id='top_progress' class="progress-bar progress-bar-animated" role="progressbar" style="width: 20%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
     </div> -->
-    <div id='cnt' onclick="if(_viewer.isShown) $('#ftb_icons').toggle();">
+    <div id='cnt' class='hide' onclick="if(_viewer.isShown) $('#ftb_icons').toggle();">
         <span>00:00</span>
     </div>
     <div id="page-wrapper" class="page-wrapper with-navbar with-sidebar with-navbar-fixed-bottom with-transitions" data-sidebar-type="overlayed-sm-and-down" data-sidebar-hidden="hidden">
@@ -110,6 +183,25 @@
         <div class="sticky-alerts">
             <div id="FYsY6Z" class="alert dispose"><button class="close" data-dismiss="alert" type="button" aria-label="Close"><span aria-hidden="true">×</span></button>
                 <h4 class="alert-heading">Toast!</h4>This is a default alert with <a href="#" class="alert-link">a link</a> being toasted.
+            </div>
+        </div>
+        <div class="sticky-alerts">
+            <div class="alert alert-primary filled" role="alert" id="alert_custom">
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <img data-action="previewImage" src="res/maki.jpg" class="w-50 h-50 d-flex align-items-center rounded-circle" alt="user">
+                            </td>
+                            <td class="pl-20">
+                                <h4 class="alert-heading mb-5">maki</h4>
+                                <div>
+                                    Jane Doe just sent you a new message.
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
         <!-- Navbar start -->
@@ -135,55 +227,38 @@
         </nav>
         <div class="sidebar-overlay" onclick="halfmoon.toggleSidebar()"></div>
         <div class="sidebar" style="z-index: 2100">
-            <!-- <div class="sidebar-menu">
-                <div class="sidebar-content">
+            <div class="sidebar-menu">
+                <!-- <div class="sidebar-content">
                     <input type="text" class="form-control" placeholder="Search">
                     <div class="mt-10 font-size-12">
                         Press <kbd>/</kbd> to focus
                     </div>
-                </div>
-                <h5 class="sidebar-title">File</h5>
+                </div> -->
+                <h5 class="sidebar-title">統計</h5>
                 <div class="sidebar-divider"></div>
-                <a href="#" class="sidebar-link sidebar-link-with-icon" data-action="open">
-                    <span class="sidebar-icon">
-                        <i class="fa fa-file" aria-hidden="true"></i>
-                    </span>
-                    Open
-                </a>
-                <a href="#" class="sidebar-link sidebar-link-with-icon" data-action="export">
-                    <span class="sidebar-icon">
-                        <i class="fa fa-download" aria-hidden="true"></i>
-                    </span>
-                    Export
-                </a>
+                <div id='online_time'></div>
                 <br>
-                <h5 class="sidebar-title">Components</h5>
+                <h5 class="sidebar-title">作品</h5>
                 <div class="sidebar-divider"></div>
-                <a href="#" class="sidebar-link sidebar-link-with-icon">
-                    <span class="sidebar-icon">
-                        <i class="fa fa-folder-open-o" aria-hidden="true"></i>
-                    </span>
-                    File explorer
-                </a>
-                <a href="#" class="sidebar-link sidebar-link-with-icon">
-                    <span class="sidebar-icon">
-                        <i class="fa fa-table" aria-hidden="true"></i>
-                    </span>
-                    Spreadsheet
-                </a>
-                <a href="#" class="sidebar-link sidebar-link-with-icon">
-                    <span class="sidebar-icon">
-                        <i class="fa fa-map-o" aria-hidden="true"></i>
-                    </span>
-                    Map
-                </a>
-                <a href="#" class="sidebar-link sidebar-link-with-icon">
-                    <span class="sidebar-icon">
-                        <i class="fa fa-commenting-o" aria-hidden="true"></i>
-                    </span>
-                    Messenger
-                </a>
-            </div> -->
+                <div id='images_hisotry' class="p-10">
+                    <div id='days_tabs' class="overflow-x-scroll overflow-y-hidden w-full h-50">
+                        <div class="w-auto h-50" style="display: flex">
+                            <button class="btn" data-action="imageHistory_toDay" data-id="search">
+                                8.7
+                            </button>
+                            <button class="btn" data-action="imageHistory_toDay" data-id="like">
+                                8.6
+                            </button>
+
+                        </div>
+                    </div>
+                    <div id='days_imgs' class="overflow-y-scroll overflow-x-hidden w-full" style="height: 500px;">
+                        <div class="w-auto h-hlaf" style="display: flex">
+                        </div>
+                    </div>
+
+                </div>
+            </div>
             <div id='sidebar_icons_float'>
                 <div class="row mx-auto" style="width: 20%;">
                     <div class="col-md-6">
@@ -198,7 +273,7 @@
                 <div class="row row-eq-spacing-lg" style="width: 100%;text-align: center;">
                     <div class="col-lg-9" id='content' style="margin: 0 auto;">
                         <div>
-                            <img id="image" class='fullwidth' src="res/demo.jpg" alt="Picture">
+                            <img id="image" data-action="openViewer" class='fullwidth' src="res/demo.jpg" alt="Picture">
                         </div>
                     </div>
                 </div>
@@ -208,12 +283,11 @@
                     <i class="fa fa-arrow-up" aria-hidden="true"></i>
                 </button>
                 <div class="btn-group mx-auto" role="group">
-                    <button class="btn btn-primary" type="button" data-action="toTab,chat">チャット
+                    <button class="btn btn-primary" type="button" data-action="toTab,chat"><i class="fa fa-comments" aria-hidden="true"></i>
                         <span class="badge badge-danger badge-pill" id='unread' style="display: none"></span>
                     </button>
-                    <button class="btn" type="button" data-action="toTab,music">音楽</button>
-                    <button class="btn" type="button" data-action="toTab,video">動画</button>
-
+                    <button class="btn" type="button" data-action="toTab,music"><i class="fa fa-music" aria-hidden="true"></i></button>
+                    <button class="btn" type="button" data-action="toTab,video"><i class="fa fa-video-camera" aria-hidden="true"></i></button>
                 </div>
                 <button class="btn btn-dark" data-action="playerList">
                     <i class="fa fa-user" aria-hidden="true"></i>
@@ -225,9 +299,9 @@
                     <table class="table table-striped">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th style="width: 65%;">メッセージ</th>
-                                <th class="text-right">送信時間</th>
+                                <th><i class="fa fa-user" aria-hidden="true"></i></th>
+                                <th style="width: 65%;"><i class="fa fa-comment-o" aria-hidden="true"></i></th>
+                                <th class="text-right"><i class="fa fa-clock-o" aria-hidden="true"></i></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -244,21 +318,20 @@
                 <div id='content_music' class='_content hide'>
                     <div class="row p-10" style="width: 100%">
                         <div class="dropdown">
-                          <button class="btn" data-toggle="dropdown" type="button" id="dropdown-toggle-btn-1" aria-haspopup="true" aria-expanded="false">
-                            シェア <i class="fa fa-angle-down ml-5" aria-hidden="true"></i> 
-                          </button>
-                          <div class="dropdown-menu" aria-labelledby="dropdown-toggle-btn-1">
-                            <!-- <h6 class="dropdown-header">Share</h6> -->
-                            <a href="#" class="dropdown-item" data-action="playlist_add">曲リンク</a>
-                            <a href="#" class="dropdown-item" data-action="playlist_set">リストリンク</a>
-                            <div class="dropdown-divider"></div>
-                            <div class="dropdown-content">
-                              <button class="btn btn-block" type="button" onclick="window.open('https://www.youtube.com', '_blank')">Youtubeへ</button>
+                            <button class="btn" data-toggle="dropdown" type="button" id="dropdown-toggle-btn-1" aria-haspopup="true" aria-expanded="false">
+                                シェア <i class="fa fa-angle-down ml-5" aria-hidden="true"></i>
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdown-toggle-btn-1">
+                                <!-- <h6 class="dropdown-header">Share</h6> -->
+                                <a href="#" class="dropdown-item" data-action="playlist_add">曲リンク</a>
+                                <a href="#" class="dropdown-item" data-action="playlist_set">リストリンク</a>
+                                <div class="dropdown-divider"></div>
+                                <div class="dropdown-content">
+                                    <button class="btn btn-block" type="button" onclick="window.open('https://www.youtube.com', '_blank')">Youtubeへ</button>
+                                </div>
                             </div>
-                          </div>
                         </div>
                     </div>
-
                     <table class="table table-striped">
                         <thead>
                             <tr>
@@ -290,33 +363,32 @@
                 </div>
                 <div id='content_video' class='_content hide'>
                     <div class="row">
-                        <video id='video' class="col-12" src="" controls autoplay></video>
+                        <video id='video' class="col-12 hide" controls autoplay></video>
                         <div class="col-12">
                             <div class="btn-toolbar p-5 rounded" role="toolbar">
-                            <button class="btn btn-dark" onclick="window.open('https://www.youtube.com/watch?v='+_video.vid, '_blank');">
-                                <i class="fa fa-external-link-square" aria-hidden="true"></i>
-                            </button>
-                            <div class="btn-group mx-auto" role="group">
-                                <button class="btn btn-primary" type="button" data-btn="btn_videoHistory" data-action="tosubTab,video,videoHistory">履歴
-                                    <span class="badge badge-danger badge-pill hide" data-clickHide=1></span>
+                                <button class="btn btn-dark" onclick="window.open('https://www.youtube.com/watch?v='+_video.vid, '_blank');">
+                                    <i class="fa fa-external-link-square" aria-hidden="true"></i>
                                 </button>
-                                <!--  data-action="tosubTab,video,videoNote" -->
-                                <button class="btn" type="button" data-btn="btn_videoNote">メモ
-                                    <span class="badge badge-danger badge-pill hide"></span>
-                                </button>
-
-                                <button class="btn btn-dark" data-action="video_set">
-                                    <i class="fa fa-youtube-play" aria-hidden="true"></i>
+                                <div class="btn-group mx-auto" role="group">
+                                    <button class="btn btn-primary" type="button" data-btn="btn_videoHistory" data-action="tosubTab,video,videoHistory">履歴
+                                        <span class="badge badge-danger badge-pill hide" data-clickHide=1></span>
+                                    </button>
+                                    <!--  data-action="tosubTab,video,videoNote" -->
+                                    <button class="btn" type="button" data-btn="btn_videoNote">メモ
+                                        <span class="badge badge-danger badge-pill hide"></span>
+                                    </button>
+                                    <button class="btn btn-dark" data-action="video_set">
+                                        <i class="fa fa-youtube-play" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                                <button class="btn btn-dark" data-action="saveScreenshoot">
+                                    <i class="fa fa-camera" aria-hidden="true"></i>
                                 </button>
                             </div>
-                            <button class="btn btn-dark" data-action="saveScreenshoot">
-                                <i class="fa fa-camera" aria-hidden="true"></i>
-                            </button>
-                        </div>
                         </div>
                         <div id='subContent_video' style="width: 100%;">
                             <div class="subContent" id='subContent_videoHistory'>
-                                 <table class="table table-striped">
+                                <table class="table table-striped">
                                     <thead>
                                         <tr>
                                             <th>#</th>
@@ -356,54 +428,55 @@
                 <i class="fa fa-music" aria-hidden="true"></i>
             </button>
         </div>
+        <div style="position: fixed;bottom: 8%;width: 100%;">
+            <div id="bottom_stricker" class="bg-dark toolbar overflow-x-scroll overflow-y-hidden w-full h-125" style="display: none;">
+                <div class="row w-auto h-125" style="display: flex">
+                </div>
+            </div>
+        </div>
         <nav class="navbar navbar-fixed-bottom" style="height: 8%">
             <div class="container-fluid">
                 <div id="bottom_chat" class="row toolbar" style="width: 100%;">
-                    <input type="text" id='msg' class="form-control col-8" placeholder="ここで入力する..." onkeydown="if(event.keyCode == 13) doAction(null, 'sendMsg')">
-                    <div class="col-4 text-center">
-                        <button class="btn col-5 btn-primary" type="button" data-action="sendImage">
-                            <i class="fa fa-picture-o" aria-hidden="true"></i>
-                        </button>
-                        <button class="btn col-5 btn-primary float-right" type="button" data-action="sendMsg">
+                    <div class="col-10" style="background-color: #1d2023;border-radius: 20px;    display: flex;align-items: center;">
+                        <i data-action="show_stricker" class="fa fa-smile-o ml-10 font-size-18" aria-hidden="true"></i>
+                        <input type="text" id='msg' class="form-control col-8 ml-10" placeholder="ここで入力する..." onkeydown="if(event.keyCode == 13) doAction(null, 'sendMsg')" style="    background-color: unset;border: unset;" oninput="checkStrickerTags(this)">
+                        <i class="fa fa-picture-o font-size-18 text-right col mr-10" aria-hidden="true" data-action="sendImage"></i>
+                    </div>
+                    <div class="col-2">
+                        <button class="btn btn-primary float-right w-full" type="button" data-action="sendMsg" style="max-width: 80%;">
                             <i class="fa fa-paper-plane" aria-hidden="true"></i>
                         </button>
                     </div>
                 </div>
                 <div id="bottom_video" class="row toolbar hide" style="width: 100%;">
-                    
                 </div>
                 <div id="bottom_music" class="row toolbar hide" style="width: 100%;">
-                    
-                   <div class="row" style="width: 100%">
+                    <div class="row" style="width: 100%">
                         <div class="col-3">
                             <img src="res/maki.jpg" class="rounded-circle cover" alt="maki">
                         </div>
-                        
                         <div class="col-9">
                             <div class="row text-center icons">
                                 <div class="col-4">
                                     <i data-action="audio_prev" class="fa fa-arrow-left" aria-hidden="true"></i>
                                 </div>
-
                                 <div class="col-4">
                                     <i data-action="audio_play" class="fa fa-play" aria-hidden="true"></i>
                                 </div>
-
                                 <div class="col-4">
                                     <i data-action="audio_next" class="fa fa-arrow-right" aria-hidden="true"></i>
                                 </div>
                             </div>
                             <div class="progress-group" style="position: relative;top: -7px;">
-                              <div class="progress col-12" style="height: 5px;width: 100%">
-                                <div class="progress-bar progress-bar-animated" id='audio_progress' role="progressbar" style="width: 0%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
-                              </div>
-                              <span class="progress-group-label">
-                                <i class="fa fa-spinner text-primary font-size-16"></i> 
-                              </span>
+                                <div class="progress col-12" style="height: 5px;width: 100%">
+                                    <div class="progress-bar progress-bar-animated" id='audio_progress' role="progressbar" style="width: 0%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <span class="progress-group-label">
+                                    <i class="fa fa-spinner text-primary font-size-16"></i>
+                                </span>
                             </div>
                         </div>
-
-                   </div>
+                    </div>
                 </div>
             </div>
         </nav>
@@ -413,6 +486,9 @@
     <script src="js/halfmoon.min.js"></script>
     <script src="js/viewer.min.js"></script>
     <script src="js/recorder.js"></script>
+    <script src="js/lazyload.min.js"></script>
+    <script src="js/imagesloaded.pkgd.min.js"></script>
+    <script src="js/md5.js"></script>
     <script src="js/index.js"></script>
     <script type="text/javascript">
     function toastAlert() {

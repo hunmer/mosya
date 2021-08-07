@@ -921,7 +921,17 @@ body:not(.dark-mode) .bg-color-box.bg-transparent {
     bottom: 0;
 }
 
+#modal_icons_float {
+    position: absolute;
+    right: 7%;
+    bottom: 2%;
+}
+
 #sidebar_icons_float a {
+    margin-bottom: 10px;
+}
+
+#modal_icons_float a {
     margin-bottom: 10px;
 }
 
@@ -966,4 +976,34 @@ body:not(.dark-mode) .bg-color-box.bg-transparent {
     border-radius: 50%;
     bottom: -7px;
     right: 7px;
+}
+
+#modal-stricker button img {
+    width: 20px;
+    height: 20px;
+}
+
+#modal-stricker .col-4 img,#bottom_stricker img {
+    width: inherit;
+    padding: 10px;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.selected {
+    border: 1px solid var(--dm-button-primary-border-color-hover);
+}
+
+.h-125 {
+    height: 125px;
+    max-height: 125px;
+}
+
+#days_tabs button {
+    margin-right: 10px;
+}
+
+#days_imgs img {
+    width: inherit;
+    margin-bottom: 10px;
 }

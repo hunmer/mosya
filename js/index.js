@@ -5,14 +5,14 @@ var _video = $('#video')[0];
 var _audio_stricker = $('#audio_stricker')[0];
 var g_json;
 var socket_url = 'wss:///mosya-server.glitch.me';
-// var socket_url = 'ws://127.0.0.1:8000';
-// var socket_url = 'ws://192.168.31.189:8000';
-
-// var g_api = 'api/';
+var g_imageHost = 'https://mosya-server.glitch.me/';
 var g_api = 'https://neysummer-api.glitch.me/';
 
-// var g_imageHost = 'http://127.0.0.1/mosya-websocket/';
-var g_imageHost = 'https://mosya-server.glitch.me';
+
+// var socket_url = 'ws://192.168.31.189:8000';
+var socket_url = 'ws://127.0.0.1:8000';
+var g_api = 'api/';
+var g_imageHost = 'http://127.0.0.1/mosya-websocket/';
 
 var g_cache = {
     logined: false,
@@ -328,7 +328,6 @@ function doAction(dom, action, params) {
             $(dom).addClass('btn-primary');
 
             var time = new Date(new Date().getFullYear()+'/'+$(dom).html().replace('.', '/')).getTime();
-            console.log(time);
             queryMsg({type: 'pics', time: time, max: 3600 * 24 * 1000})
             break;
         case 'downloadImageToServer':
@@ -846,7 +845,7 @@ function initWebsock() {
         g_cache.logined = true;
         $('#status').attr('class', 'bg-success');
         queryMsg({ type: 'login', user: g_config.user });
-
+         queryMsg({type: 'pics_datas'});
         socketTest();
     }
 
@@ -884,10 +883,22 @@ function reviceMsg(data) {
     var type = data.type;
     delete data.type;
     switch (type) {
+        case 'pics_datas':
+            var h = '';
+            var days = [];
+            for(var time of data.data){
+                var day = getFormatedTime(2, new Date(time));
+                if(days.indexOf(day) == -1){
+                    days.push(day);
+                    h+=`<button class="btn" data-action="imageHistory_toDay" data-id="search">`+day+`</button>`;
+                }
+            }
+            $('#days_tabs div').html(h);
+            break;
         case 'pics':
             var h = '';
             if(data.data == undefined){
-                toastPAlert('no data!', 1000, '', 'alert-warning');
+                toastPAlert('データがありません!', 1000, '', 'alert-warning');
                 return;
             }
             for(var key in data.data){

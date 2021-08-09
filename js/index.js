@@ -2,6 +2,7 @@ var _audio = $('#audio')[0];
 var _audio2 = $('#soundTip')[0];
 var _record = $('#record')[0];
 var _video = $('#video')[0];
+var _tts = $('#tts')[0];
 var _audio_stricker = $('#audio_stricker')[0];
 var g_json;
 var socket_url = 'wss:///mosya-server.glitch.me';
@@ -9,8 +10,8 @@ var g_imageHost = 'https://mosya-server.glitch.me/';
 var g_api = 'https://neysummer-api.glitch.me/';
 
 
-// var socket_url = 'ws://192.168.31.189:8000';
 // var socket_url = 'ws://127.0.0.1:8000';
+// // var socket_url = 'ws://192.168.31.189:8000';
 // var g_api = 'api/';
 // var g_imageHost = 'http://127.0.0.1/mosya-websocket/';
 
@@ -24,7 +25,8 @@ var g_cache = {
     saveTag: {
         timer: 0,
     },
-    tags: []
+    tags: [],
+    a_tts: [],
 }
 var _viewer;
 $(function() {
@@ -49,18 +51,18 @@ function init() {
     $('body').show();
 
     initWebsock();
-     _audio_stricker.onplay = () => {
-        if(_audio_stricker.icon){
+    _audio_stricker.onplay = () => {
+        if (_audio_stricker.icon) {
             $(_audio_stricker.icon).prop('class', 'fa fa-pause')
         }
     }
     _audio_stricker.onpause = () => {
-        if(_audio_stricker.icon){
+        if (_audio_stricker.icon) {
             $(_audio_stricker.icon).prop('class', 'fa fa-play')
         }
     }
     _audio_stricker.onended = () => {
-        if(_audio_stricker.icon){
+        if (_audio_stricker.icon) {
             $(_audio_stricker.icon).prop('class', 'fa fa-play')
             _audio_stricker.icon = undefined;
         }
@@ -87,8 +89,16 @@ function init() {
         doAction(null, 'audio_next');
     }
 
+    _tts.onended = () => {
+        var next = g_cache.a_tts.pop();
+        if (next != undefined) {
+            _tts.src = next;
+        }
+    }
+
     _audio.onerror = () => {
-        console.log('audio retry ' + _audio.retry, _audio.src);
+        if (_audio.retry == undefined) _audio.retry = 0;
+        //console.log('audio retry ' + _audio.retry, _audio.src);
         _audio.retry++;
         if (_audio.retry >= 3) {
             doAction(null, 'audio_next');
@@ -121,6 +131,29 @@ function init() {
         _audio.volume = 1;
     }
 
+    setInterval(() => {
+        var skip = true;
+        var data = {type: 'status', data: {}};
+        if(!_audio.paused){
+            skip = false;
+            data.data.audio = {
+                time: _audio.currentTime,
+                url: _audio.src
+            }
+        }
+        if(!_video.paused){
+            skip = false;
+            data.data.video = {
+                time: _video.currentTime,
+                url: _video.src
+            }
+        }
+        if(!skip){
+            queryMsg(data, true)
+        }
+         //queryMsg({type: 'list'})
+    }, 10000);
+
     $(document).on('click', '[data-action]', function(event) {
             doAction(this, $(this).attr('data-action'));
         })
@@ -142,12 +175,12 @@ function init() {
                 }
             }
         }).
-        on('mouseenter', '.gif', (event) => {
-            var img = event.currentTarget;
-            img.src = img.src;
-        });
+    on('mouseenter', '.gif', (event) => {
+        var img = event.currentTarget;
+        img.src = img.src;
+    });
 
-   
+
 
     $('#image')[0].addEventListener('viewed', function() {
         if (this.viewer === _viewer) {
@@ -157,14 +190,42 @@ function init() {
 
     $('#image')[0].addEventListener('hidden', function() {
         if (this.viewer === _viewer) {
-            if(!g_cache.post || g_cache.post.time <= 0){
+            if (!g_cache.post || g_cache.post.time <= 0) {
                 $('#cnt').hide();
             }
             $('#ftb_icons').hide();
         }
     });
 
+    $('input[type=file]').on('change', function(event) {
+        var that = this;
+        lrz(that.files[0])
+            .then(function(rst) {
+                // console.log(rst);
+                //console.log(parseInt(that.files[0].size / 1024), parseInt(rst.fileLen / 1024));
+                switch (that.id) {
+                    case 'input_preview':
+                        $('#img_uploadImage').attr('src', rst.base64).attr('title', rst.origin.name).show();
+                        $('#upload_title').val(that.files[0].name);
+                        break;
 
+                    case 'img_sendImage':
+                        queryMsg({ type: 'msg', user: g_config.user.name, msg: '<img class="thumb" data-action="previewImage" src="' + rst.base64 + '" alt="Upload by ' + g_config.user.name + '">' });
+                        break;
+                }
+            })
+            .catch(function(err) {
+                // 处理失败会执行
+            });
+    });
+    $('#grid_x').val(g_config.grid.x);
+    $('#grid_y').val(g_config.grid.y);
+    $('#grid_size').val(g_config.grid.size);
+    $('input[type=color]').val(g_config.grid.color); 
+    $('#div_mainImg').height($('#image').height());
+    $(window).resize((e) => {
+        drawBoard();
+    })
     test();
 
 }
@@ -172,6 +233,37 @@ function init() {
 function setAudioSrc(player, src) {
     player.source = src;
     player.src = src;
+}
+function setGrid(type, add, min) {
+    var i;
+    if(min != undefined){
+        i = add.value;
+        if(i<min){
+            i = min;
+            add.value = min;
+        }
+    }else{
+        i = Number($('#grid_'+type).val());
+        if(add > 0){
+            i++;
+        }else
+        if(add < 0){
+            i--;
+            if(i < 1) return;
+        }
+    }
+    g_config.grid[type] = i;
+    local_saveJson('config', g_config);
+    $('#grid_'+type).val(i)
+    drawBoard();
+}
+
+
+
+function setGridColor(color){
+    g_config.grid.color = color;
+    local_saveJson('config', g_config);
+    drawBoard();
 }
 
 function uploadImage(btn) {
@@ -196,16 +288,6 @@ function uploadImage(btn) {
     }
     queryMsg({ type: 'post', data: g_cache.post });
 }
-
-function sendImage() {
-    var reader = new FileReader();
-    reader.readAsDataURL($('#img_sendImage')[0].files[0]);
-    reader.onload = (e) => {
-        queryMsg({ type: 'msg', user: g_config.user.name, msg: '<img class="thumb" data-action="previewImage" src="' + e.currentTarget.result + '" alt="Upload by '+g_config.user.name+'">' });
-    }
-}
-
-
 
 function selectTime(dom) {
     if (dom.value == 'custom') {
@@ -246,51 +328,52 @@ function saveFile(url, filename) {
     document.body.removeChild(eleLink);
 }
 
-function isShow($node){
+function isShow($node) {
     return $node.offset().top <= $(window).height() + $(window).scrollTop()
 }
 
 
-function checkStrickerMeta(id, sid, img){
+function checkStrickerMeta(id, sid, img) {
     var pic;
     data = {
-        id:id, 
+        id: id,
         sid: sid,
         img: $(img).attr('data-src'),
     };
-    if(g_stricker['id_'+id]['hasAnimation']){
-        pic = 'http://dl.stickershop.line.naver.jp/products/0/0/1/'+id+'/android/animation/'+sid+'.png';
+    if (g_stricker['id_' + id]['hasAnimation']) {
+        pic = 'http://dl.stickershop.line.naver.jp/products/0/0/1/' + id + '/android/animation/' + sid + '.png';
         data.animation = pic;
         reloadImage($(img).attr('data-src', pic)[0]);
     }
-     if(g_stricker['id_'+id]['hasSound']){
-        data.audio = 'http://dl.stickershop.line.naver.jp/products/0/0/1/'+id+'/android/sound/'+sid+'.m4a';
+    if (g_stricker['id_' + id]['hasSound']) {
+        data.audio = 'http://dl.stickershop.line.naver.jp/products/0/0/1/' + id + '/android/sound/' + sid + '.m4a';
         _audio_stricker.src = data.audio;
         _audio_stricker.img = pic || $(img).attr('data-src');
     }
     g_cache.strick_last = data;
 }
 
-function sendStricker(){
+function sendStricker() {
     var animation = g_cache.strick_last.animation;
-    var data = { type: 'msg', msg: '<img class="thumb'+(animation ? ' gif' : '')+'" data-action="previewImage" src="' + (animation || g_cache.strick_last.img) + '">' };
-    if(g_cache.strick_last.audio){
+    // TODO 默认预载图片
+    var data = { type: 'msg', msg: '<img class="thumb loading' + (animation ? ' gif' : '') + '" data-action="previewImage" data-src="' + (animation || g_cache.strick_last.img) + '">' };
+    if (g_cache.strick_last.audio) {
         data.audio = g_cache.strick_last.audio;
     }
     $('#bottom_stricker').hide();
     queryMsg(data, true);
 }
 
-function reloadImage(img){
+function reloadImage(img) {
     img.src = img.getAttribute('data-src');
-    imagesLoaded(img).on('progress', function( instance, image ) {
+    imagesLoaded(img).on('progress', function(instance, image) {
         var index = g_cache.reloadImage.indexOf(image.img);
-        if(!image.isLoaded){
+        if (!image.isLoaded) {
             image.img.src = 'res/reload.png';
-            if(index == -1) g_cache.reloadImage.push(image.img);
-            if(!g_cache.reloadImage_timer){
+            if (index == -1) g_cache.reloadImage.push(image.img);
+            if (!g_cache.reloadImage_timer) {
                 g_cache.reloadImage_timer = setInterval(() => {
-                    for(var img of g_cache.reloadImage){
+                    for (var img of g_cache.reloadImage) {
                         reloadImage(img);
                     }
                 }, 2000);
@@ -298,8 +381,8 @@ function reloadImage(img){
             return;
         }
         img.classList.remove('loading');
-        if(index != -1) g_cache.reloadImage.splice(index, 1);
-        if(g_cache.reloadImage.length == 0){
+        if (index != -1) g_cache.reloadImage.splice(index, 1);
+        if (g_cache.reloadImage.length == 0) {
             clearInterval(g_cache.reloadImage_timer);
             g_cache.reloadImage_timer = 0;
         }
@@ -311,10 +394,10 @@ function doAction(dom, action, params) {
     var action = action.split(',');
     switch (action[0]) {
         case 'openViewer':
-            if($('.sidebar-overlay').css('display') != 'none'){
+            if ($('#page-wrapper').attr('data-sidebar-hidden') != 'hidden') {
                 halfmoon.toggleSidebar();
             }
-            if(_viewer != undefined) _viewer.destroy();
+            if (_viewer != undefined) _viewer.destroy();
             _viewer = new Viewer(dom, {
                 backdrop: 'static',
                 navbar: 0,
@@ -327,32 +410,32 @@ function doAction(dom, action, params) {
             $('#days_tabs button.btn-primary').removeClass('btn-primary');
             $(dom).addClass('btn-primary');
 
-            var time = new Date(new Date().getFullYear()+'/'+$(dom).html().replace('.', '/')).getTime();
-            queryMsg({type: 'pics', time: time, max: 3600 * 24 * 1000})
+            var time = new Date(new Date().getFullYear() + '/' + $(dom).html().replace('.', '/')).getTime();
+            queryMsg({ type: 'pics', time: time, max: 3600 * 24 * 1000 })
             break;
         case 'downloadImageToServer':
             var src = $('#modal-img img').attr('src');
-            if(src.indexOf('http:') == -1){
-                queryMsg({type: 'save', data: src, desc: $('#modal-img .modal-title').html()});
+            if (src.indexOf('http:') == -1) {
+                queryMsg({ type: 'save', data: src, desc: $('#modal-img .modal-title').html() });
             }
             break;
         case 'stricker_delete':
             var selected = $('[data-action="stricker_toTab"].btn-primary');
-            delete g_stricker['id_'+selected.attr('data-id')];
+            delete g_stricker['id_' + selected.attr('data-id')];
             selected.remove();
             local_saveJson('stricker', g_stricker);
             break;
         case 'stricker_left':
             var selected = $('[data-action="stricker_toTab"].btn-primary');
             var keys = Object.keys(g_stricker);
-            var key = 'id_'+selected.attr('data-id');
+            var key = 'id_' + selected.attr('data-id');
             var index = keys.indexOf(key);
-            if(index != -1){
+            if (index != -1) {
                 var prev = $(selected).prev();
-                if(prev.length == 0 || ['like', 'search'].indexOf(prev.attr('data-id')) != -1){
+                if (prev.length == 0 || ['like', 'search'].indexOf(prev.attr('data-id')) != -1) {
                     selected.appendTo($('#stricker_tabs div'));
                     to = keys.length - 1;
-                }else{
+                } else {
                     $(selected).insertBefore(prev);
                     to = index - 1;
                 }
@@ -361,7 +444,7 @@ function doAction(dom, action, params) {
                 keys[to] = key;
             }
             var n = {};
-            for(var key of keys){
+            for (var key of keys) {
                 n[key] = g_stricker[key];
             }
             g_stricker = n;
@@ -372,14 +455,14 @@ function doAction(dom, action, params) {
         case 'stricker_right':
             var selected = $('[data-action="stricker_toTab"].btn-primary');
             var keys = Object.keys(g_stricker);
-            var key = 'id_'+selected.attr('data-id');
+            var key = 'id_' + selected.attr('data-id');
             var index = keys.indexOf(key);
-            if(index != -1){
+            if (index != -1) {
                 var next = $(selected).next();
-                if(next.length == 0){
+                if (next.length == 0) {
                     selected.insertAfter($('.btn[data-id="like"]'));
                     to = 0;
-                }else{
+                } else {
                     $(selected).insertAfter(next);
                     to = index + 1;
                 }
@@ -389,7 +472,7 @@ function doAction(dom, action, params) {
             }
             g_test = keys;
             var n = {};
-            for(var key of keys){
+            for (var key of keys) {
                 n[key] = g_stricker[key];
             }
             g_stricker = n;
@@ -399,7 +482,7 @@ function doAction(dom, action, params) {
 
         case 'sendStricker':
             var img = $('.selected').attr('src');
-            if(img.indexOf('res/reload.png') != -1){
+            if (img.indexOf('res/reload.png') != -1) {
                 toastPAlert('読み込み中', 1000, '', 'alert-warning');
                 return;
             }
@@ -409,11 +492,11 @@ function doAction(dom, action, params) {
             local_saveJson('stricker_options', g_stricker_options); // 保存最后选择的贴图
             break;
         case 'previewStricker_bottom':
-            if(dom.src.indexOf('res/reload.png') != -1){
+            if (dom.src.indexOf('res/reload.png') != -1) {
                 dom.src = $(dom).attr('data-src');
                 reloadImage(dom);
-            }else{
-                if(!$(dom).hasClass('selected')){
+            } else {
+                if (!$(dom).hasClass('selected')) {
                     checkStrickerMeta($(dom).attr('data-id'), $(dom).attr('data-sid'), dom);
                     $(dom).addClass('selected');
                     return;
@@ -423,11 +506,11 @@ function doAction(dom, action, params) {
             }
             break;
         case 'previewStricker':
-            if(dom.src.indexOf('res/reload.png') != -1){
+            if (dom.src.indexOf('res/reload.png') != -1) {
                 dom.src = $(dom).attr('data-src');
                 reloadImage(dom);
-            }else{
-                if($(dom).hasClass('selected')){
+            } else {
+                if ($(dom).hasClass('selected')) {
                     sendStricker();
                     halfmoon.toggleModal('modal-stricker');
                     return;
@@ -444,10 +527,10 @@ function doAction(dom, action, params) {
                     'data-sid': sid,
                 })[0]);
 
-               
+
                 checkStrickerMeta(g_stricker_options.last.id, sid, $('#stricker_footer img'));
 
-                var key = ($(dom).attr('data-id') || g_stricker_options.last.id)+','+g_stricker_options.last.sid;
+                var key = ($(dom).attr('data-id') || g_stricker_options.last.id) + ',' + g_stricker_options.last.sid;
                 $('#modal-stricker input[type=checkbox]').prop('checked', g_stricker_options.likes.indexOf(key) != -1)
                 $('#modal-stricker textarea').val(g_stricker_options.tags[key] != undefined ? g_stricker_options.tags[key] : '');
             }
@@ -464,26 +547,26 @@ function doAction(dom, action, params) {
 
             var id = $(dom).attr('data-id');
             $('[data-action="stricker_delete"], [data-action="stricker_left"], [data-action="stricker_right"], [data-action="stricker_openURL"]').css('display', ['like', 'search'].indexOf(id) != -1 ? 'none' : 'unset')
-            $('#modal-stricker .modal-title span').html(id == 'like' ? 'お気に入り' : id == 'search' ? '検索' : g_stricker['id_'+id].name);
+            $('#modal-stricker .modal-title span').html(id == 'like' ? 'お気に入り' : id == 'search' ? '検索' : g_stricker['id_' + id].name);
 
-            for(var div of $('.stricker_content')){
-                if(div.id == 'stricker_'+id){
+            for (var div of $('.stricker_content')) {
+                if (div.id == 'stricker_' + id) {
                     g_stricker_options.last.id = id;
-                    for(var img of $(div).show().find('.loading')){
+                    for (var img of $(div).show().find('.loading')) {
                         reloadImage(img);
                     }
-                }else{
+                } else {
                     $(div).hide();
                 }
             }
             break;
         case 'stricker_openURL':
-            if(parseInt(g_stricker_options.last.id) > 0){
-                window.open('https://store.line.me/stickershop/product/'+g_stricker_options.last.id, '_blank');
+            if (parseInt(g_stricker_options.last.id) > 0) {
+                window.open('https://store.line.me/stickershop/product/' + g_stricker_options.last.id, '_blank');
             }
             break;
         case 'addStrick':
-            if(confirm('['+$(dom).attr('data-title')+'] を追加しますか?')){
+            if (confirm('[' + $(dom).attr('data-title') + '] を追加しますか?')) {
                 queryStricker($(dom).attr('data-id'));
             }
             break;
@@ -494,19 +577,23 @@ function doAction(dom, action, params) {
             div.find('input').css('display', opened ? 'none' : 'initial');
             break;
         case 'show_stricker':
+            initStrickers();
             $('#stricker_footer').css('display', (g_stricker.length ? 'unset' : 'none'));
             halfmoon.toggleModal('modal-stricker');
-            if(g_stricker_options.last.id != ''){
-                var btn = $('[data-action="stricker_toTab"][data-id="'+g_stricker_options.last.id+'"]')[0];
+            if (g_stricker_options.last.id != '') {
+                var btn = $('[data-action="stricker_toTab"][data-id="' + g_stricker_options.last.id + '"]')[0];
                 btn.click();
                 btn.scrollIntoView();
+            }
+            for(var img of $('#stricker_tabs .loading')){
+                reloadImage(img);
             }
             break;
         case 'downloadImage':
             var src = $('#modal-img img').attr('src');
-            if(src.indexOf('data:image/') != -1){
+            if (src.indexOf('data:image/') != -1) {
                 saveFile(src, getNow());
-            }else{
+            } else {
                 window.open(src, '_blank');
             }
             break;
@@ -637,7 +724,7 @@ function doAction(dom, action, params) {
         case 'prompt_msg':
             var m = prompt('内容');
             if (m != '' && m != null) {
-                queryMsg({ type: 'msg', user: g_config.user.name, msg: m });
+                queryMsg({ type: 'msg', user: g_config.user.name, msg: m, textOnly: true });
             }
             break;
         case 'show_chat':
@@ -695,21 +782,51 @@ function doAction(dom, action, params) {
             if (msg == '') return;
             $('#msg').val('');
             $('#bottom_stricker').hide();
-            queryMsg({ type: 'msg', user: g_config.user.name, msg: msg });
+            queryMsg({ type: 'msg', user: g_config.user.name, msg: msg, textOnly: true });
             break;
         case 'playerList':
             updatePlaylist();
             halfmoon.toggleModal('modal-custom');
             break;
+        case 'play_url':
+            var obj;
+
+            switch ($(dom).attr('data-type')) {
+                case 'audio':
+                    obj = _audio;
+                    _video.pause();
+                    break;
+
+                case 'video':
+                    obj = _video;
+                    _audio.pause();
+                    closeModal('modal-custom', 'playerList', () => {
+                        halfmoon.toggleModal('modal-custom');
+                    });
+                    doAction(null, 'toTab,video');
+                    $(_video).show();
+                    break;
+            }
+            if (obj) {
+
+                obj.src = $(dom).attr('data-url');
+                obj.currentTime = $(dom).attr('data-time');
+            }
+            break;
         case 'play_strickerAudio':
             _audio_stricker.src = $(dom).attr('data-audio');
             _audio_stricker.icon = $(dom).find('i');
             break;
+        case 'deleteServerImage':
+            if (confirm('are you sure?')) {
+                queryMsg({ type: 'deleteServerImage', md5: $(dom).parent('[data-md5]').attr('data-md5') });
+            }
+            break;
         case 'previewImage':
-            if(dom.src.indexOf('/animation/') != -1){
+            if (dom.src.indexOf('/animation/') != -1) {
                 var now = getNow();
                 var last = $('#modal-img').attr('data-click');
-                if(!last || now - last >= 5 ||  $('#modal-img').attr('data-url') != dom.src){
+                if (!last || now - last >= 5 || $('#modal-img').attr('data-url') != dom.src) {
                     $('#modal-img').attr('data-click', now).attr('data-url', dom.src);
                     return;
                 }
@@ -789,31 +906,45 @@ function doAction(dom, action, params) {
             }
             queryMsg({ type: 'addTime', data: min }, true);
             break;
+
     }
 }
 
 function updatePlaylist() {
-    $('#modal-custom').find('.modal-title').html('メンバー');
+    $('#modal-custom').find('.modal-title').html(`メンバー<i class="fa fa-refresh float-right" onclick="queryMsg({ type: 'list' });" aria-hidden="true"></i>`);
     var html = `
     <table class="table table-striped">
     <thead>
         <tr>
-            <th>#</th>
-            <th>名前</th>
-            <th class="text-right">オンライン時間</th>
+            <th><i class="fa fa-user" aria-hidden="true"></th>
+            <th><i class="fa fa-music" aria-hidden="true"></th>
+            <th><i class="fa fa-video-camera" aria-hidden="true"></th>
+            <th class="text-right"><i class="fa fa-clock-o" aria-hidden="true"></th>
         </tr>
     </thead>
     <tbody>
     `;
-    var date;
+    var date, d;
     for (var name in g_cache.players) {
+        d = g_cache.players[name];
         html += `
             <tr>
                   <th>
                       <img src="res/` + name + `.jpg" class="img-fluid rounded-circle user-icon" alt="` + name + `">
                   </th>
-                  <td>` + name + `</td>
-                  <td class="text-right">` + getTime(g_cache.players[name].loginAt) + `</td>
+                  <td>` + (d.status.audio != undefined ? `
+                    <a href="#" class="badge-group" role="group" aria-label="...">
+                      <span class="badge bg-dark text-white">` + getTime(parseInt(d.status.audio.time)) + `</span> 
+                      <span class="badge badge-success" data-action="play_url" data-type='audio' data-url="` + d.status.audio.url + `" data-time="` + d.status.audio.time + `"><i class="fa fa-play" aria-hidden="true"></i></span>
+                    </a>
+                    ` : '') + `</td>
+                  <td>` + (d.status.video != undefined ? `
+                    <a href="#" class="badge-group" role="group" aria-label="...">
+                      <span class="badge bg-dark text-white">` + getTime(parseInt(d.status.video.time)) + `</span> 
+                      <span class="badge badge-success" data-action="play_url" data-type='video' data-url="` + d.status.video.url + `" data-time="` + d.status.video.time + `"><i class="fa fa-play" aria-hidden="true"></i></span>
+                    </a>
+                    ` : '') + `</td>
+                  <td class="text-right">` + getTime(d.loginAt) + `</td>
                 </tr> 
         `;
     }
@@ -838,6 +969,7 @@ function recon() {
     }
 }
 
+
 function initWebsock() {
     if (connection != undefined) connection.close();
     connection = new WebSocket(socket_url);
@@ -845,7 +977,7 @@ function initWebsock() {
         g_cache.logined = true;
         $('#status').attr('class', 'bg-success');
         queryMsg({ type: 'login', user: g_config.user });
-         queryMsg({type: 'pics_datas'});
+        queryMsg({ type: 'pics_datas' });
         socketTest();
     }
 
@@ -877,51 +1009,150 @@ function parseMusiclist(data) {
     });
 }
 
+var g_canva = $('canvas');
+
+function drawBoard() {
+    var context = g_canva.get(0).getContext("2d");
+    g_canva[0].height=context.height;  // 清除画布
+    if(!g_config.grid.enable){
+        g_canva.hide();
+        return;
+    }
+    g_canva.show();
+
+    //grid width and height
+    var bw = $('#image').width();
+    var bh = $('#image').height();
+
+    //padding around grid
+    var p = 0;
+    //size of canvas
+    var cw = bw + (p * 2) + 1;
+    var ch = bh + (p * 2) + 1;
+    
+    if (cw != g_canva.width() || ch != g_canva.height()) {
+        g_canva.attr('width', cw);
+        g_canva.attr('height', ch);
+        g_canva.offset($('#image').offset());
+    }
+    context.beginPath();
+    context.setLineDash([3, 3]);  //画虚线
+    for (var x = 0; x <= bw; x += bw / g_config.grid.x) {
+        context.moveTo(0.5 + x + p, p);
+        context.lineTo(0.5 + x + p, bh + p);
+    }
+
+    for (var x = 0; x <= bh; x += bh / g_config.grid.y) {
+        context.moveTo(p, 0.5 + x + p);
+        context.lineTo(bw + p, 0.5 + x + p);
+    }
+
+    context.strokeStyle = g_config.grid.color;
+    context.lineWidth = g_config.grid.size;
+    context.stroke();
+    context.closePath();
+
+}
+
+
+var g_i_current = 0;
+
+function spturn() {
+    g_i_current = 0;
+    $('#image').toggleClass('mirrorRotateLevel');
+}
+
+function czturn() {
+    g_i_current = 0;
+    $('#image').toggleClass('mirrorRotateVertical');
+}
+
+function turnLeft() {
+    g_i_current = (g_i_current - 90) % 360;
+    setRotate(g_i_current);
+}
+
+function turnRight() {
+    g_i_current = (g_i_current + 90) % 360;
+    setRotate(g_i_current);
+}
+
+function setRotate(rotate) {
+    $('#image')
+        .removeClass('mirrorRotateLevel')
+        .removeClass('mirrorRotateVertical')[0].style.transform = 'rotate(' + rotate + 'deg)';
+}
+
+
 function reviceMsg(data) {
     console.log(data);
-
     var type = data.type;
     delete data.type;
     switch (type) {
+
+        case 'tts':
+            if (_tts.paused) {
+                _tts.src = data.data;
+            } else {
+                g_cache.a_tts.push(data.data);
+            }
+            break;
+        case 'history_message':
+            for (var d of data.data) {
+                d.type = 'msg';
+                reviceMsg(d);
+            }
+            for (var img of $('img.loading')) {
+                reloadImage(img);
+            }
+            break;
         case 'pics_datas':
             var h = '';
             var days = [];
-            for(var time of data.data){
+            for (var time of data.data) {
                 var day = getFormatedTime(2, new Date(time));
-                if(days.indexOf(day) == -1){
+                if (days.indexOf(day) == -1) {
                     days.push(day);
-                    h+=`<button class="btn" data-action="imageHistory_toDay" data-id="search">`+day+`</button>`;
+                    h += `<button class="btn" data-action="imageHistory_toDay" data-id="search">` + day + `</button>`;
                 }
             }
             $('#days_tabs div').html(h);
+            if (data.removed) {
+                $('.div-photo[data-md5="' + data.removed + '"]').remove();
+            }
             break;
         case 'pics':
             var h = '';
-            if(data.data == undefined){
+            if (data.data == undefined) {
                 toastPAlert('データがありません!', 1000, '', 'alert-warning');
                 return;
             }
-            for(var key in data.data){
+            for (var key in data.data) {
                 var detail = data.data[key];
-                h+=`<h6 class="text-center">`+getFormatedTime(1, new Date(detail.time))+' ('+detail.desc+`)</h6><img data-action="openViewer" src="`+g_imageHost+`saves/`+key+`.jpg" class="" alt="`+detail.desc+`">`
+                h += `<div class="div-photo" data-md5="` + key + `"><h6 class="text-center">` + getFormatedTime(1, new Date(detail.time)) + ' (' + detail.desc + `)</h6><img data-action="openViewer" src="` + g_imageHost + `saves/` + key + `.jpg" class="serverImg" alt="` + detail.desc + `">`;
+                if (g_config.user.name == 'maki') {
+                    h += `<a href="#" class="btn btn-square btn-danger rounded-circle" data-action="deleteServerImage" role="button"><i class="fa fa-trash-o" aria-hidden="true"></i></a> 
+                    `;
+                }
+                h += '</div>'
             }
             $('#days_imgs').html(h);
             break;
         case 'online':
             var h = '';
-            for(var user in data.data){
+            for (var user in data.data) {
                 var i = 0;
-                for(var day in data.data[user]){
-                    i+=data.data[user][day];
+                for (var day in data.data[user]) {
+                    i += data.data[user][day];
                 }
-                h+=`<a href="#" class="sidebar-link sidebar-link-with-icon" data-action="show_onlineTime">
+                h += `<a href="#" class="sidebar-link sidebar-link-with-icon" data-action="show_onlineTime">
                     <span class="sidebar-icon">
-                        <img id='img_user' data-action="previewImage" src="res/`+user+`.jpg" class="rounded-circle user-icon" alt="`+user+`">
+                        <img id='img_user' data-action="previewImage" src="res/` + user + `.jpg" class="rounded-circle user-icon" alt="` + user + `">
                     </span>
-                    約`+parseInt(i / 3600)+`時間
+                    約` + parseInt(i / 3600) + `時間
                 </a>`
             }
-             $('#online_time').html(h);
+            $('#online_time').html(h);
             break;
         case 'addTime':
             toastPAlert(data.user + 'が時間を延長しました(' + data.data + 'Min)');
@@ -990,15 +1221,12 @@ function reviceMsg(data) {
         case 'list':
             g_cache.players = data.data;
             $('[data-action="playerList"] span').html(Object.keys(g_cache.players).length);
-            if (g_cache.loginAtTimer) clearInterval(g_cache.loginAtTimer);
-            g_cache.loginAtTimer = setInterval(() => {
-                for (var name in g_cache.players) {
-                    g_cache.players[name].loginAt++;
-                }
-                closeModal('modal-custom', 'playerList', () => {
-                    updatePlaylist();
-                });
-            }, 1000);
+            closeModal('modal-custom', 'playerList', () => {
+                updatePlaylist();
+            });
+            if (data.quit) {
+                // 离开房间
+            }
             break;
         case 'post':
             parsePost(data.data);
@@ -1007,8 +1235,8 @@ function reviceMsg(data) {
             toastPAlert(data.msg, data.time, data.title, data.msgType);
             break;
         case 'save':
-            var img = $('[data-md5="'+data.data+'"]');
-            if(img.length){
+            var img = $('[data-md5="' + data.data + '"]');
+            if (img.length) {
                 $(`<a href="#" class="btn btn-square btn-success rounded-circle" style="position: relative;bottom: 5px;right: 20px;" role="button"><i class="fa fa-check" aria-hidden="true"></i></a> 
                 `).insertAfter(img);
                 closeModal('modal-img', false, () => {
@@ -1018,7 +1246,6 @@ function reviceMsg(data) {
             break;
         case 'msg':
         case 'voice':
-
             var dom = addMsg(`<tr class="msg">
                   <th>
                       <img src="` + getUserIcon(data.user) + `" class="rounded-circle user-icon" alt="` + data.user + `">
@@ -1055,15 +1282,20 @@ function reviceMsg(data) {
                     }
                 }
             }
-            if(data.audio){
-               $(`<a href="#" class="btn btn-square btn-success rounded-circle" data-action="play_strickerAudio" data-audio="`+data.audio+`" style="position: relative;bottom: 5px;right: 20px;" role="button"><i class="fa fa-play" aria-hidden="true"></i></a> 
+            if (data.audio) {
+                $(`<a href="#" class="btn btn-square btn-success rounded-circle" data-action="play_strickerAudio" data-audio="` + data.audio + `" style="position: relative;bottom: 5px;right: 20px;" role="button"><i class="fa fa-play" aria-hidden="true"></i></a> 
                 `).insertAfter(image);
-                $('#audio_stricker').src = data.audio;
+                $('#audio_stricker')[0].src = data.audio;
             }
-            if(image.length){
-               if(image[0].src.indexOf('data:image/') != -1){
+            if (image.length) {
+                if (image[0].src.indexOf('data:image/') != -1) {
                     $(image).attr('data-md5', md5(image[0].src));
-                } 
+                }
+                // $(`<a href="#" class="btn btn-square btn-secondary rounded-circle" data-action="show_stricker" style="position: relative;top: 0px;left: 20px;" role="button"><i class="fa fa-smile-o font-size-20" aria-hidden="true"></i></a> 
+                // `).insertBefore(image);
+                if (image.hasClass('loading')) {
+                    reloadImage(image[0]);
+                }
             }
             closeModal('modal-custom', 'chat', () => {
                 $('#modal-custom .modal-html table').prepend(dom.clone());
@@ -1120,7 +1352,7 @@ function alertMsg(data) {
 function closeModal(id, type, fun) {
     var modal = $('#' + id)
     if (modal.hasClass('show')) {
-        if(type && modal.attr('data-type') != type){
+        if (type && modal.attr('data-type') != type) {
             return;
         }
         fun();
@@ -1129,6 +1361,8 @@ function closeModal(id, type, fun) {
 
 function parsePost(data, save = true) {
     clearInterval(g_cache.timer);
+    setRotate(0);
+    $('#cnt').attr('class', 'badge badge-primary text-light').show();
 
     var isFirst = g_cache.post == undefined;
     var isNew = !isFirst && g_cache.post.img != data.img;
@@ -1146,7 +1380,7 @@ function parsePost(data, save = true) {
     if (isFirst || isNew) { // 图片有变动才在消息显示
         reviceMsg({ type: 'msg', user: data.user, msg: '<img class="thumb" data-action="previewImage" src="' + g_cache.post.img + '">' });
         $('#image').attr('src', g_cache.post.img);
-        if (_viewer.isShown) {
+        if (_viewer && _viewer.isShown) {
             _viewer.image.src = g_cache.post.img;
         }
     }
@@ -1154,7 +1388,10 @@ function parsePost(data, save = true) {
     g_cache.timer = setInterval(() => {
         g_cache.post.time--;
         if (g_cache.post.time >= 0) {
-            $('#cnt').show().html(getTime(g_cache.post.time));
+            $('#cnt').html(getTime(g_cache.post.time));
+        } else {
+            $('#cnt').attr('class', 'badge badge-success text-light');
+            clearInterval(g_cache.timer);
         }
     }, 1000);
 }
@@ -1191,108 +1428,108 @@ function searchStrick(keyword) {
     $.getJSON(g_api + 'stricker.php?type=search&s=' + keyword, function(json, textStatus) {
         if (textStatus == 'success') {
             var h = '';
-            for(var detail of json){
-                h+=`
-                <div class="col-4" data-action="addStrick" data-title='`+detail['name']+`' data-id="`+detail['id']+`">
-                    <img src='`+detail['icon']+`' title='`+detail['name']+`'>    
+            for (var detail of json) {
+                h += `
+                <div class="col-4" data-action="addStrick" data-title='` + detail['name'] + `' data-id="` + detail['id'] + `">
+                    <img src='` + detail['icon'] + `' title='` + detail['name'] + `'>    
                 `;
-                if(detail['hasAnimation'] || detail['hasSound']){
-                    h+='<span class="badge-group float-right">';
-                    if(detail['hasAnimation']){
-                        h+='<span class="badge badge-primary"><i class="fa fa-volume-down" aria-hidden="true"></i></span>';
+                if (detail['hasAnimation'] || detail['hasSound']) {
+                    h += '<span class="badge-group float-right">';
+                    if (detail['hasAnimation']) {
+                        h += '<span class="badge badge-primary"><i class="fa fa-volume-down" aria-hidden="true"></i></span>';
                     }
-                    if(detail['hasSound']){
-                        h+='<span class="badge badge-primary"><i class="fa fa-play" aria-hidden="true"></i></span>';
+                    if (detail['hasSound']) {
+                        h += '<span class="badge badge-primary"><i class="fa fa-play" aria-hidden="true"></i></span>';
                     }
-                    h+='</span>';
+                    h += '</span>';
                 }
-                h+='</div>';
+                h += '</div>';
             }
-             $('#stricker_search').html(h);
+            $('#stricker_search').html(h);
             $('.btn[data-id="search"]').show().click();
         }
     });
 }
 
-function queryStricker(id, alert = true){
-     $.getJSON(g_api + 'stricker.php?type=ids&id=' + id, function(json, textStatus) {
-                 if (textStatus == 'success') {
-                    g_stricker['id_'+id] = json;
-                    local_saveJson('stricker', g_stricker);
+function queryStricker(id, alert = true) {
+    $.getJSON(g_api + 'stricker.php?type=ids&id=' + id, function(json, textStatus) {
+        if (textStatus == 'success') {
+            g_stricker['id_' + id] = json;
+            local_saveJson('stricker', g_stricker);
 
-                    addStrick(json, alert);
-                    if(alert) toastPAlert('追加に成功しました', 3000, '', 'alert-success');
-                 }else{
-                    if(alert) toastPAlert('もう一度試してください', 3000, '', 'alert-warning');
-                 }
-             });
+            addStrick(json, alert);
+            if (alert) toastPAlert('追加に成功しました', 3000, '', 'alert-success');
+        } else {
+            if (alert) toastPAlert('もう一度試してください', 3000, '', 'alert-warning');
+        }
+    });
 }
 
 function addStrick(data, active = false) {
     var btn = $(`
-    <button class="btn" data-action="stricker_toTab" data-id="`+data.id+`">
-        <img class="lazyload" src='https://sdl-stickershop.line.naver.jp/products/0/0/1/` + data.id + `/android/main.png'>
+    <button class="btn" data-action="stricker_toTab" data-id="` + data.id + `">
+        <img class="loading" data-src='https://sdl-stickershop.line.naver.jp/products/0/0/1/` + data.id + `/android/main.png'>
     </button>
     `);
-   $('#stricker_tabs div').append(btn)[0];
-    var h = `<div id='stricker_`+data.id+`' class="row w-full h-200 stricker_content" style="align-items: center; display:none">`;
+    $('#stricker_tabs div').append(btn)[0];
+    var h = `<div id='stricker_` + data.id + `' class="row w-full h-200 stricker_content" style="align-items: center; display:none">`;
     for (var id of data.stickers) {
         h += getStrickerHTML(data.id, id);
     }
-    $('#stricker_content').append(h+'</div>');
-    if(active){
+    $('#stricker_content').append(h + '</div>');
+    if (active) {
         var tabs = $('#stricker_tabs')[0];
         tabs.scrollTo(tabs.scrollWidth, 0);
         btn.click();
     }
 }
 
-function getStrickerHTML(id, sid, fromLike = false){
-    return  `
+function getStrickerHTML(id, sid, fromLike = false) {
+    return `
         <div class="col-4">
-            <img class="loading"`+(fromLike ? ' data-id="'+id+'"' : '')+` data-sid="`+sid+`" data-action="previewStricker" data-src='http://dl.stickershop.line.naver.jp/products/0/0/1/` + id + `/android/stickers/` + sid + `.png'>
+            <img class="loading"` + (fromLike ? ' data-id="' + id + '"' : '') + ` data-sid="` + sid + `" data-action="previewStricker" data-src='http://dl.stickershop.line.naver.jp/products/0/0/1/` + id + `/android/stickers/` + sid + `.png'>
         </div>
         `;
 }
 
-function getStrickerHTML_bottom(id, sid){
+function getStrickerHTML_bottom(id, sid) {
     var url = `http://dl.stickershop.line.naver.jp/products/0/0/1/` + id + `/android/stickers/` + sid + `.png`;
-    return  `
+    return `
         <div class="col-4">
-            <img data-id="`+id+`" data-sid="`+sid+`" data-action="previewStricker_bottom" data-src='`+url+`' src='`+url+`'>
+            <img data-id="` + id + `" data-sid="` + sid + `" data-action="previewStricker_bottom" data-src='` + url + `' src='` + url + `'>
         </div>
         `;
 }
 
-function likeStrickerImg(switcher){
+function likeStrickerImg(switcher) {
     var img = $('#stricker_footer img');
     var id = $(img).attr('data-id');
     var sid = $(img).attr('data-sid');
-    var key = id+','+sid;
+    var key = id + ',' + sid;
     var index = g_stricker_options.likes.indexOf(key);
     var save = false;
-    if(switcher.checked){
-        if(index == -1){
+    if (switcher.checked) {
+        if (index == -1) {
             g_stricker_options.likes.push(key);
             save = true;
             $('#stricker_like').prepend(getStrickerHTML(id, sid));
         }
-    }else{
-        if(index != -1){
+    } else {
+        if (index != -1) {
             g_stricker_options.likes.splice(index, 1);
             save = true;
         }
     }
-    if(save){
+    if (save) {
         local_saveJson('stricker_options', g_stricker_options);
     }
 }
 
-function stricker_saveTags(textarea){
+function stricker_saveTags(textarea) {
     var img = $('#stricker_footer img');
     var text = textarea.value;
-    var key = $(img).attr('data-id')+','+$(img).attr('data-sid');
-    if(g_cache.saveTag.timer) clearTimeout(g_cache.saveTag.timer);
+    var key = $(img).attr('data-id') + ',' + $(img).attr('data-sid');
+    if (g_cache.saveTag.timer) clearTimeout(g_cache.saveTag.timer);
     g_cache.saveTag = {
         text: text,
         key: key,
@@ -1301,63 +1538,74 @@ function stricker_saveTags(textarea){
             var key = g_cache.saveTag.key;
             console.log(text, key);
             var exists = g_stricker_options.tags[key] != undefined;
-            if(text == ''){
-                if(!exists){
+            if (text == '') {
+                if (!exists) {
                     return;
                 }
                 delete g_stricker_options.tags[key];
-            }else{
-                if(exists && g_stricker_options.tags[key] == text){
+            } else {
+                if (exists && g_stricker_options.tags[key] == text) {
                     return;
                 }
                 g_stricker_options.tags[key] = text;
             }
             local_saveJson('stricker_options', g_stricker_options);
-             g_cache.tags = Object.entries(g_stricker_options.tags);
+            g_cache.tags = Object.entries(g_stricker_options.tags);
         }, 1000)
     }
 }
-function checkStrickerTags(textarea){
+
+function checkStrickerTags(textarea) {
     var h = '';
     var text = textarea.value;
-    if(text != ''){
-        for(var tag of g_cache.tags){
-            if(tag[1].indexOf(text) != -1){
+    if (text != '') {
+        for (var tag of g_cache.tags) {
+            if (tag[1].indexOf(text) != -1) {
                 var args = tag[0].split(',');
                 h += getStrickerHTML_bottom(args[0], args[1]);
             }
         }
     }
-    if(h != ''){
+    if (h != '') {
         $('#bottom_stricker').show().find('.row').html(h);
-    }else{
+    } else {
         $('#bottom_stricker').hide();
     }
 }
 
-function test() {
-    g_cache.tags = Object.entries(g_stricker_options.tags);
-
+function initStrickers() {
     if (!g_cache.strickerInited) {
+        g_cache.tags = Object.entries(g_stricker_options.tags);
         for (var id in g_stricker) {
             addStrick(g_stricker[id]);
         }
         var h = '';
-        for(var key of g_stricker_options.likes){
+        for (var key of g_stricker_options.likes) {
             var args = key.split(',');
-             h += getStrickerHTML(args[0], args[1], true);
+            h += getStrickerHTML(args[0], args[1], true);
         }
         $('#stricker_like').html(h);
 
         g_cache.strickerInited = true;
     }
-    
+}
 
+function test() {
+    
+    // if(g_config.user.name == 'maki'){
+    //     _audio.src = 'res/music.mp3';
+    // }
+    // if(g_config.user.name == 'chisato'){
+    //     _video.src = 'res/test.mp4';
+    //     $(_video).show();
+    // }
+
+    drawBoard();
     // halfmoon.toastAlert('precompiled-alert-1', 17500);
-    //halfmoon.toggleModal('modal-custom');
+    // halfmoon.toggleModal('modal-custom');
     //doAction(null, 'toTab,video');
 }
 
-function socketTest(){
-    queryMsg({type: 'online'});
+function socketTest() {
+    queryMsg({ type: 'online' });
 }

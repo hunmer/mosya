@@ -1,16 +1,35 @@
-
-body {
-    font-family: -apple-system, BlinkMacSystemFont, Roboto, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+@font-face {
+  font-family: janFont;
+  src: url(../fonts/KosugiMaru-Regular.ttf);
 }
 
-body.use-roboto-all {
-    font-family: "Roboto", sans-serif;
+body {
+    font-family: janFont, -apple-system, BlinkMacSystemFont, Roboto, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
 body.with-extra-letter-spacing-on-side-navs .sidebar *,
 body.with-extra-letter-spacing-on-side-navs .on-this-page-nav * {
     letter-spacing: 0.3px;
 }
+.mirrorRotateLevel {          /* 水平镜像翻转 */
+    transform: rotateY(180deg) !important; 
+    -moz-transform:scaleX(-1) !important;
+    -webkit-transform:scaleX(-1) !important;
+    -o-transform:scaleX(-1) !important;
+    transform:scaleX(-1) !important;
+    /*兼容IE*/
+    filter:FlipH !important;;
+}
+.mirrorRotateVertical {        /* 垂直镜像翻转 */
+     transform: rotateX(180deg) !important;
+    -moz-transform:scaleY(-1) !important;
+    -webkit-transform:scaleY(-1) !important;
+    -o-transform:scaleY(-1) !important;
+    transform:scaleY(-1) !important;
+    /*兼容IE*/
+    filter:FlipV !important;
+}
+
 
 
 ::-webkit-scrollbar {
@@ -940,13 +959,10 @@ body:not(.dark-mode) .bg-color-box.bg-transparent {
 }
 
 #cnt {
-    width:50px;
-    height:30px;
     position:fixed;
-    left:50%;
-    top: 30px;
-    margin-left:-25px;
-    margin-top:-15px;
+    right:5%;
+    bottom: 10%;
+    display: none;
     z-index:9999;
 }
 
@@ -1003,7 +1019,25 @@ body:not(.dark-mode) .bg-color-box.bg-transparent {
     margin-right: 10px;
 }
 
-#days_imgs img {
-    width: inherit;
+.div-photo img {
+    width: 100%;
     margin-bottom: 10px;
+}
+
+.color-dot {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    border: 0.5px solid #6d6d6d;
+}
+
+input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+}
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+input[type="color"]::-webkit-color-swatch {
+    border: none;
 }

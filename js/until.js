@@ -10,7 +10,7 @@ var g_config = local_readJson('config', {
         x: 5,
         y: 5,
         color: 'black',
-        size: 1
+        size: 1,
         enable: false,
     },
     user: {

@@ -90,10 +90,17 @@ function init() {
     }
 
     _tts.onended = () => {
+        _audio.volume = 1;
+        _audio2.volume = 1;
         var next = g_cache.a_tts.pop();
         if (next != undefined) {
             _tts.src = next;
         }
+    }
+
+    _tts.onplay = () => {
+        _audio.volume = 0.25;
+        _audio2.volume = 0.25;
     }
 
     _audio.onerror = () => {
@@ -303,6 +310,7 @@ function selectTime(dom) {
     }
 }
 
+
 function setUser(name, save = false) {
     g_config.user.name = name;
     $('#img_user').attr('src', 'res/' + (['maki', 'chisato'].indexOf(name) != -1 ? name : 'user') + '.jpg');
@@ -393,6 +401,42 @@ function reloadImage(img) {
 function doAction(dom, action, params) {
     var action = action.split(',');
     switch (action[0]) {
+        case 'saveSetting':
+            g_config.tipSound = $('#select-tip').val();
+            g_config.tts = $('#checkbox_tts').prop('checked');
+            local_saveJson('config', g_config);
+            halfmoon.toggleModal('modal-custom');
+            break;
+        case 'openSetting':
+            $('#modal-custom').find('.modal-title').html('設定');
+            $('#modal-custom').attr('data-type', 'setting').find('.modal-html').html(`
+                <div class="form-group">
+                        <label>ヒント音</label>
+                        <div class="row">
+                            <select class="form-control col-4" id="select-tip" onchange="if (this.value == 'custom') {var url = prompt('input url', 120);if (url != null && url != '') $(this).find(':disabled').val(url).html(url).prop('selected', true);}else{soundTip(this.value)}">
+                                <option value="" selected>なし</option>
+                                <option value="res/tip_paopao.wav">シャボン玉</option>
+                                <option value="res/tip_dingdong.wav">ディンドン</option>
+                                <option value="res/tip_dingdong.mp3">ディンドン1</option>
+                                <option value="res/tip_line.wav">line</option>
+                                <option value="res/tip_mail.wav">メール</option>
+                                <option value="res/tip_iphone.wav">iphone</option>
+                                <option value="custom">カスタム</option>
+                            </select>
+                            <div class="col-4"></div>
+                            <div class="custom-switch col-4">
+                                <input type="checkbox" id="checkbox_tts" value="">
+                                <label for="checkbox_tts">音読</label>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-block mt-10" id="btn_upload" data-action="saveSetting">保存</button>
+                    </div>
+
+                `);
+            halfmoon.toggleModal('modal-custom');
+            $('option[value="'+g_config.tipSound+'"]').prop('selected', true);
+            $('#checkbox_tts').prop('checked', g_config.tts);
+            break;
         case 'openViewer':
             if ($('#page-wrapper').attr('data-sidebar-hidden') != 'hidden') {
                 halfmoon.toggleSidebar();
@@ -854,8 +898,9 @@ function doAction(dom, action, params) {
         case 'toTab':
             $('#tabs .btn-primary').removeClass('btn-primary');
             $('[data-action="toTab,' + action[1] + '"]').addClass('btn-primary');
+            var toolbar = action.length > 2 ? action[2] : action[1];
             for (var con of $('.toolbar')) {
-                if (con.id == 'bottom_' + action[1]) {
+                if (con.id == 'bottom_' + toolbar) {
                     $(con).show();
                 } else {
                     $(con).hide();
@@ -1091,8 +1136,10 @@ function reviceMsg(data) {
     switch (type) {
 
         case 'tts':
+            if(g_config.tts != undefined && !g_config.tts) return;
             if (_tts.paused) {
                 _tts.src = data.data;
+                _tts.play();
             } else {
                 g_cache.a_tts.push(data.data);
             }
@@ -1334,7 +1381,7 @@ function broadcastMessage(msg, classes) {
 function addMsg(html) {
     var d = $(html);
     $('#content_chat table').prepend(d);
-    soundTip('res/pop.mp3');
+    soundTip(g_config.tipSound || 'res/pop.mp3');
     return d;
 }
 

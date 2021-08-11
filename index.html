@@ -34,7 +34,7 @@
     <title>模写ルーム</title>
 </head>
 
-<body class="dark-mode with-custom-webkit-scrollbars with-custom-css-scrollbars" data-dm-shortcut-enabled="true" data-sidebar-shortcut-enabled="true" style="display: none;">
+<body class="dark-mode with-custom-webkit-scrollbars with-custom-css-scrollbars" data-dm-shortcut-enabled="true" data-sidebar-shortcut-enabled="true" style="display: none;min-width: 400px;">
     <div class="modal" id="modal-upload" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -51,7 +51,7 @@
                     <input type="text" id="upload_title" class="form-control" placeholder="title">
                 </div>
                 <div class="form-group">
-                    <label for="password" class="required">時間制限</label>
+                    <label class="required">時間制限</label>
                     <div class="row">
                         <select class="form-control col-9" id="select-time" onchange="selectTime(this)">
                             <option value="" selected disabled>選択してください</option>
@@ -100,6 +100,7 @@
                 </a>
                 <h5 class="modal-title text-center">Title</h5>
                 <div class="modal-html">
+                    
                 </div>
             </div>
         </div>
@@ -214,11 +215,33 @@
                 <!-- <span class="d-none d-sm-flex">00:00</span> -->
             </a>
             <div class="navbar-content ml-auto">
-                <div class="dropdown">
-                    <button class="btn" data-toggle="dropdown" type="button" id="sign-in-dropdown-toggle-btn" aria-haspopup="true" aria-expanded="false">
-                        <i class="fa fa-th" aria-hidden="true"></i> <i class="fa fa-angle-down ml-5" aria-hidden="true"></i>
+
+                <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
+                 <!-- <button class="btn btn-action" type="button" onclick="turnRight()">
+                        <i class="fa fa-repeat" aria-hidden="true"></i>
+                        <span class="sr-only"><-</span>
+                </button> -->
+                <button class="btn btn-action" type="button" onclick="spturn()">
+                    <i class="fa fa-arrows-h" aria-hidden="true"></i>
+                    <span class="sr-only">
+                        <-</span>
+                </button>
+                <button class="btn btn-action" type="button" onclick="czturn()">
+                    <i class="fa fa-arrows-v" aria-hidden="true"></i>
+                    <span class="sr-only">
+                        <-</span>
+                </button>
+                <button class="btn btn-action" type="button" onclick="turnLeft()">
+                    <i class="fa fa-undo" aria-hidden="true"></i>
+                    <span class="sr-only">
+                        <-</span>
                     </button>
-                    <div class="dropdown-menu w-250 w-sm-350">
+                  <div class="btn-group dropdown with-arrow mr-10" role="group">
+                    <button class="btn btn-square" data-toggle="dropdown" type="button" id="dropdown-toggle-btn-1" aria-haspopup="true" aria-expanded="false">
+                      <i class="fa fa-angle-down" aria-hidden="true"></i>
+                      <span class="sr-only">Open dropdown</span> 
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-center">
                         <div class="dropdown-content p-10">
                             <div class="custom-switch float-right">
                               <input type="checkbox" id="switch-grid" onchange="g_config.grid.enable = this.checked;local_saveJson('config', g_config);drawBoard();"value="">
@@ -268,20 +291,11 @@
                             <div class="dropdown-divider"></div>
                             <a href="#" class="dropdown-item text-center text-primary" onclick="g_config.grid = {x: 5, y:5};$('#grid_y,#grid_x').val(5);drawBoard();local_saveJson('config', g_config);">リセット</a>
                         </div>
-                    </div>
-                    <button class="btn btn-action" type="button" onclick="turnRight()">
-                        <i class="fa fa-repeat" aria-hidden="true"></i>
-                        <span class="sr-only">
-                            <-</span> </button> <button class="btn btn-action" type="button" onclick="spturn()">
-                                <i class="fa fa-arrows-h" aria-hidden="true"></i>
-                                <span class="sr-only">
-                                    <-</span> </button> <button class="btn btn-action" type="button" onclick="czturn()">
-                                        <i class="fa fa-arrows-v" aria-hidden="true"></i>
-                                        <span class="sr-only">
-                                            <-</span> </button> <button class="btn btn-action mr-10" type="button" onclick="turnLeft()">
-                                                <i class="fa fa-undo" aria-hidden="true"></i>
-                                                <span class="sr-only">
-                                                    <-</span> </button> <button class="btn btn-action btn-primary mr-5" type="button" data-action="upload">
+                  </div>
+                </div>
+
+
+                     <button class="btn btn-action btn-primary mr-5" type="button" data-action="upload">
                                                         <i class="fa fa-upload" aria-hidden="true"></i>
                                                         <span class="sr-only">upload</span>
                     </button>
@@ -323,7 +337,7 @@
                 <div class="row mx-auto" style="width: 20%;">
                     <div class="col-md-6">
                         <a data-action="darkMode" href="#" class="btn btn-square btn-primary rounded-circle btn-lg" role="button"><i class="fa fa-moon-o" aria-hidden="true"></i></a>
-                        <a data-action="setting" href="#" class="btn btn-square btn-primary rounded-circle btn-lg" role="button"><i class="fa fa-cog" aria-hidden="true"></i></a>
+                        <a data-action="openSetting" href="#" class="btn btn-square btn-primary rounded-circle btn-lg" role="button"><i class="fa fa-cog" aria-hidden="true"></i></a>
                     </div>
                 </div>
             </div>
@@ -348,7 +362,7 @@
                         <span class="badge badge-danger badge-pill" id='unread' style="display: none"></span>
                     </button>
                     <button class="btn" type="button" data-action="toTab,music"><i class="fa fa-music" aria-hidden="true"></i></button>
-                    <button class="btn" type="button" data-action="toTab,video"><i class="fa fa-video-camera" aria-hidden="true"></i></button>
+                    <button class="btn" type="button" data-action="toTab,video,chat"><i class="fa fa-video-camera" aria-hidden="true"></i></button>
                 </div>
                 <button class="btn btn-dark" data-action="playerList">
                     <i class="fa fa-user" aria-hidden="true"></i>

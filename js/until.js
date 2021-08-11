@@ -27,6 +27,7 @@ var g_stricker_options = local_readJson('stricker_options', {
         sid: undefined,
     }
 });
+var g_playlist = local_readJson('playlist', {});
 
 
 function local_saveJson(key, data) {

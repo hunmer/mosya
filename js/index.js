@@ -140,25 +140,25 @@ function init() {
 
     setInterval(() => {
         var skip = true;
-        var data = {type: 'status', data: {}};
-        if(!_audio.paused){
+        var data = { type: 'status', data: {} };
+        if (!_audio.paused) {
             skip = false;
             data.data.audio = {
                 time: _audio.currentTime,
                 url: _audio.src
             }
         }
-        if(!_video.paused){
+        if (!_video.paused) {
             skip = false;
             data.data.video = {
                 time: _video.currentTime,
                 url: _video.src
             }
         }
-        if(!skip){
+        if (!skip) {
             queryMsg(data, true)
         }
-         //queryMsg({type: 'list'})
+        //queryMsg({type: 'list'})
     }, 10000);
 
     $(document).on('click', '[data-action]', function(event) {
@@ -186,8 +186,6 @@ function init() {
         var img = event.currentTarget;
         img.src = img.src;
     });
-
-
 
     $('#image')[0].addEventListener('viewed', function() {
         if (this.viewer === _viewer) {
@@ -228,46 +226,47 @@ function init() {
     $('#grid_x').val(g_config.grid.x);
     $('#grid_y').val(g_config.grid.y);
     $('#grid_size').val(g_config.grid.size);
-    $('input[type=color]').val(g_config.grid.color); 
+    $('input[type=color]').val(g_config.grid.color);
     $('#div_mainImg').height($('#image').height());
     $(window).resize((e) => {
         drawBoard();
-    })
+    });
     test();
-
 }
 
 function setAudioSrc(player, src) {
     player.source = src;
     player.src = src;
+    player.play();
 }
+
 function setGrid(type, add, min) {
     var i;
-    if(min != undefined){
+    if (min != undefined) {
         i = add.value;
-        if(i<min){
+        if (i < min) {
             i = min;
             add.value = min;
         }
-    }else{
-        i = Number($('#grid_'+type).val());
-        if(add > 0){
+    } else {
+        i = Number($('#grid_' + type).val());
+        if (add > 0) {
             i++;
-        }else
-        if(add < 0){
+        } else
+        if (add < 0) {
             i--;
-            if(i < 1) return;
+            if (i < 1) return;
         }
     }
     g_config.grid[type] = i;
     local_saveJson('config', g_config);
-    $('#grid_'+type).val(i)
+    $('#grid_' + type).val(i)
     drawBoard();
 }
 
 
 
-function setGridColor(color){
+function setGridColor(color) {
     g_config.grid.color = color;
     local_saveJson('config', g_config);
     drawBoard();
@@ -397,10 +396,108 @@ function reloadImage(img) {
     });
 }
 
+function queryPlaylist(id){
+    $.getJSON(g_api + 'search.php?server=youtube&type=list&id=' + id, function(json, textStatus) {
+        if (textStatus == 'success') {
+            g_playlist[id] = {
+                name: getFormatedTime(1),
+                length: json.length
+            }
+            local_saveJson('playlist', g_playlist);
+            queryMsg({ type: 'playlist_set', user: g_config.user.name, data: json });
+        }
+    });
+}
 
 function doAction(dom, action, params) {
     var action = action.split(',');
     switch (action[0]) {
+        case 'finish':
+            if(confirm('完成しましたか？')){
+                $(dom).hide();
+                $('#cnt').attr('class', 'badge badge-success text-black');
+                queryMsg({ type: 'msg', user: g_config.user.name, msg: 'できました！！！', textOnly: true });
+            }
+            break;
+        case 'playlist_selected':
+            $('modal-custom').find('tboday.bg-primary').removeClass('bg-primary');
+            $(dom).addClass('bg-primary');
+            $('#playlist_btns').show();
+            break;
+        case 'playlist_history':
+            if(!Object.keys(g_playlist).length){
+                toastPAlert('記録なし!', 1000, '', 'alert-secondary');
+                return;
+            }
+            var h = `<table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th data-action="playlist_clear"><i class="fa fa-trash-o" aria-hidden="true"></i></th>
+                        <th style="width: 70%;">名前</th>
+                        <th class="text-right">曲数</th>
+                    </tr>
+                </thead>`;
+            var i = 1;
+            for(var id in g_playlist){
+                h += `
+                <tbody data-id="`+id+`" data-action="playlist_selected">
+                     <tr>
+                  <th>
+                      `+i+`
+                  </th>
+                  <td>` + g_playlist[id].name + `</td>
+                  <td class="text-right">` + g_playlist[id].length + `</td>
+                </tr>
+                </tbody>
+                `;
+                i++;
+            }
+            $('#modal-custom').find('.modal-title').html('リスト');
+            $('#modal-custom').attr('data-type', 'playlist').find('.modal-html').html(h+`</table>
+                <div id="playlist_btns" class="hide mt-10">
+                <a data-action="playlist_btn_delete" href="#" class="btn bg-danger" role="button"><i class="fa fa-trash-o" aria-hidden="true"></i></a>
+                <a data-action="playlist_btn_edit" href="#" class="btn bg-default" role="button"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
+                <a data-action="playlist_btn_send" href="#" class="btn btn-primary" role="button"><i class="fa fa-paper-plane" aria-hidden="true"></i></a>
+                </div>
+            `);
+            halfmoon.toggleModal('modal-custom');
+            break;
+
+        case 'playlist_clear':
+            if(confirm('本当に全部削除してよろしですか？')){
+                g_playlist = {};
+                local_saveJson('playlist', g_playlist);
+                halfmoon.toggleModal('modal-custom');
+            }
+            break;
+
+        case 'playlist_btn_delete':
+            var selected = $('#modal-custom').find('tbody.bg-primary');
+            delete g_playlist[selected.attr('data-id')];
+            local_saveJson('playlist', g_playlist);
+            selected.remove();
+            if($('#modal-custom tbody').length == 0){
+                halfmoon.toggleModal('modal-custom');
+            }else{
+                $('#playlist_btns').hide();
+            }
+            break;
+
+        case 'playlist_btn_edit':
+            var selected = $('#modal-custom').find('tbody.bg-primary');
+            var id = selected.attr('data-id');
+            var name = prompt('名前を入力', g_playlist[id].name);
+            if(name != undefined && name != ''){
+                g_playlist[id].name = name;
+                local_saveJson('playlist', g_playlist);
+                selected.find('td')[0].innerHTML = name;
+            }
+            break;
+
+        case 'playlist_btn_send':
+            queryPlaylist($('#modal-custom').find('tbody.bg-primary').attr('data-id'));
+            halfmoon.toggleModal('modal-custom');
+            break;
         case 'saveSetting':
             g_config.tipSound = $('#select-tip').val();
             g_config.tts = $('#checkbox_tts').prop('checked');
@@ -434,7 +531,7 @@ function doAction(dom, action, params) {
 
                 `);
             halfmoon.toggleModal('modal-custom');
-            $('option[value="'+g_config.tipSound+'"]').prop('selected', true);
+            $('option[value="' + g_config.tipSound + '"]').prop('selected', true);
             $('#checkbox_tts').prop('checked', g_config.tts);
             break;
         case 'openViewer':
@@ -527,7 +624,7 @@ function doAction(dom, action, params) {
         case 'sendStricker':
             var img = $('.selected').attr('src');
             if (img.indexOf('res/reload.png') != -1) {
-                toastPAlert('読み込み中', 1000, '', 'alert-warning');
+                toastPAlert('読み込み中', 1000, '', 'alert-secondary');
                 return;
             }
             sendStricker();
@@ -629,7 +726,7 @@ function doAction(dom, action, params) {
                 btn.click();
                 btn.scrollIntoView();
             }
-            for(var img of $('#stricker_tabs .loading')){
+            for (var img of $('#stricker_tabs .loading')) {
                 reloadImage(img);
             }
             break;
@@ -671,25 +768,26 @@ function doAction(dom, action, params) {
                     alert('錯誤的url');
                     return;
                 }
-                $.getJSON(g_api + 'search.php?server=youtube&type=list&id=' + m, function(json, textStatus) {
-                    if (textStatus == 'success') {
-                        queryMsg({ type: 'playlist_set', user: g_config.user.name, data: json });
-                    }
-                });
+                queryPlaylist(m);
             }
             break;
         case 'video_set':
             var m = prompt('VIDEO URL', 'https://www.youtube.com/watch?v=9MjAJSoaoSo');
             if (m != '' && m != null) {
-                m = cutString(m + '&', '?v=', '&');
-                if (m == '') {
-                    return;
+                id = cutString(m + '&', '?v=', '&');
+                if (id !== '') {
+                    $.getJSON(g_api + 'search.php?server=youtube&type=id&id=' + id, function(json, textStatus) {
+                        if (textStatus == 'success') {
+                            queryMsg({ type: 'video', user: g_config.user.name, data: json });
+                        }
+                    });
+                }else{
+                    queryMsg({type: 'play_url', data: {
+                        type: 'video',
+                        url: m,
+                        time: 0
+                    }});
                 }
-                $.getJSON(g_api + 'search.php?server=youtube&type=id&id=' + m, function(json, textStatus) {
-                    if (textStatus == 'success') {
-                        queryMsg({ type: 'video', user: g_config.user.name, data: json });
-                    }
-                });
             }
             break;
 
@@ -697,15 +795,20 @@ function doAction(dom, action, params) {
             halfmoon.deactivateAllDropdownToggles()
             var m = prompt('VIDEO URL', 'https://www.youtube.com/watch?v=9MjAJSoaoSo');
             if (m != '' && m != null) {
-                m = cutString(m + '&', '?v=', '&');
-                if (m == '') {
-                    return;
+                id = cutString(m + '&', 'youtube.com/watch?v=', '&');
+                if (id !== '') {
+                    $.getJSON(g_api + 'search.php?server=youtube&type=id&id=' + id, function(json, textStatus) {
+                        if (textStatus == 'success') {
+                            queryMsg({ type: 'playlist_add', user: g_config.user.name, data: json });
+                        }
+                    });
+                } else {
+                    queryMsg({type: 'play_url', data: {
+                        type: 'audio',
+                        url: m,
+                        time: 0
+                    }});
                 }
-                $.getJSON(g_api + 'search.php?server=youtube&type=id&id=' + m, function(json, textStatus) {
-                    if (textStatus == 'success') {
-                        queryMsg({ type: 'playlist_add', user: g_config.user.name, data: json });
-                    }
-                });
             }
             break;
         case 'audio_play':
@@ -833,29 +936,10 @@ function doAction(dom, action, params) {
             halfmoon.toggleModal('modal-custom');
             break;
         case 'play_url':
-            var obj;
-
-            switch ($(dom).attr('data-type')) {
-                case 'audio':
-                    obj = _audio;
-                    _video.pause();
-                    break;
-
-                case 'video':
-                    obj = _video;
-                    _audio.pause();
-                    closeModal('modal-custom', 'playerList', () => {
-                        halfmoon.toggleModal('modal-custom');
-                    });
-                    doAction(null, 'toTab,video');
-                    $(_video).show();
-                    break;
-            }
-            if (obj) {
-
-                obj.src = $(dom).attr('data-url');
-                obj.currentTime = $(dom).attr('data-time');
-            }
+            playUrl({
+                type: $(dom).attr('data-type'), 
+                url: $(dom).attr('data-url'),
+                time: $(dom).attr('data-time')});
             break;
         case 'play_strickerAudio':
             _audio_stricker.src = $(dom).attr('data-audio');
@@ -867,6 +951,7 @@ function doAction(dom, action, params) {
             }
             break;
         case 'previewImage':
+            $('#cnt').hide();
             if (dom.src.indexOf('/animation/') != -1) {
                 var now = getNow();
                 var last = $('#modal-img').attr('data-click');
@@ -955,6 +1040,31 @@ function doAction(dom, action, params) {
     }
 }
 
+function playUrl(data) {
+    var obj;
+    switch (data.type) {
+        case 'audio':
+            obj = _audio;
+            _video.pause();
+            $('#bottom_music img').attr('src', 'res/cd.png');
+            break;
+
+        case 'video':
+            obj = _video;
+            _audio.pause();
+            closeModal('modal-custom', 'playerList', () => {
+                halfmoon.toggleModal('modal-custom');
+            });
+            doAction(null, 'toTab,video');
+            $(_video).show();
+            break;
+    }
+    if (obj) {
+        obj.src = data.url;
+        obj.currentTime = data.time;
+    }
+}
+
 function updatePlaylist() {
     $('#modal-custom').find('.modal-title').html(`メンバー<i class="fa fa-refresh float-right" onclick="queryMsg({ type: 'list' });" aria-hidden="true"></i>`);
     var html = `
@@ -1023,6 +1133,7 @@ function initWebsock() {
         $('#status').attr('class', 'bg-success');
         queryMsg({ type: 'login', user: g_config.user });
         queryMsg({ type: 'pics_datas' });
+        queryMsg({ type: 'history_message' });
         socketTest();
     }
 
@@ -1058,38 +1169,36 @@ var g_canva = $('canvas');
 
 function drawBoard() {
     var context = g_canva.get(0).getContext("2d");
-    g_canva[0].height=context.height;  // 清除画布
-    if(!g_config.grid.enable){
+    g_canva[0].height = context.height; // 清除画布
+    if (!g_config.grid.enable) {
         g_canva.hide();
         return;
     }
     g_canva.show();
 
     //grid width and height
-    var bw = $('#image').width();
+    var bw = $('#image').width()-4;
     var bh = $('#image').height();
 
     //padding around grid
     var p = 0;
     //size of canvas
-    var cw = bw + (p * 2) + 1;
-    var ch = bh + (p * 2) + 1;
-    
-    if (cw != g_canva.width() || ch != g_canva.height()) {
-        g_canva.attr('width', cw);
-        g_canva.attr('height', ch);
+
+    if (bw != g_canva.width() || bh != g_canva.height()) {
+        g_canva.attr('width', bw);
+        g_canva.attr('height', bh);
         g_canva.offset($('#image').offset());
     }
     context.beginPath();
-    context.setLineDash([3, 3]);  //画虚线
+    context.setLineDash([3, 3]); //画虚线
     for (var x = 0; x <= bw; x += bw / g_config.grid.x) {
-        context.moveTo(0.5 + x + p, p);
-        context.lineTo(0.5 + x + p, bh + p);
+        context.moveTo( x + p, p);
+        context.lineTo( x + p, bh + p);
     }
 
     for (var x = 0; x <= bh; x += bh / g_config.grid.y) {
-        context.moveTo(p, 0.5 + x + p);
-        context.lineTo(bw + p, 0.5 + x + p);
+        context.moveTo(p, x + p);
+        context.lineTo(bw + p, x + p);
     }
 
     context.strokeStyle = g_config.grid.color;
@@ -1134,9 +1243,11 @@ function reviceMsg(data) {
     var type = data.type;
     delete data.type;
     switch (type) {
-
+        case 'play_url':
+            playUrl(data.data);
+            break;
         case 'tts':
-            if(g_config.tts != undefined && !g_config.tts) return;
+            if (g_config.tts != undefined && !g_config.tts) return;
             if (_tts.paused) {
                 _tts.src = data.data;
                 _tts.play();
@@ -1146,7 +1257,9 @@ function reviceMsg(data) {
             break;
         case 'history_message':
             for (var d of data.data) {
-                d.type = 'msg';
+                if(d.msg != undefined){
+                    d.type = 'msg';
+                }
                 reviceMsg(d);
             }
             for (var img of $('img.loading')) {
@@ -1171,7 +1284,7 @@ function reviceMsg(data) {
         case 'pics':
             var h = '';
             if (data.data == undefined) {
-                toastPAlert('データがありません!', 1000, '', 'alert-warning');
+                toastPAlert('データがありません!', 1000, '', 'alert-secondary');
                 return;
             }
             for (var key in data.data) {
@@ -1263,7 +1376,7 @@ function reviceMsg(data) {
             `).find('tbody:eq(0)').click();
             break;
         case 'over':
-            broadcastMessage('<b>game over.</b>', 'bg-primary');
+            broadcastMessage('<b>時間切りです！</b>', 'bg-secondary');
             break;
         case 'list':
             g_cache.players = data.data;
@@ -1283,8 +1396,8 @@ function reviceMsg(data) {
             break;
         case 'save':
             var img = $('[data-md5="' + data.data + '"]');
-            if (img.length) {
-                $(`<a href="#" class="btn btn-square btn-success rounded-circle" style="position: relative;bottom: 5px;right: 20px;" role="button"><i class="fa fa-check" aria-hidden="true"></i></a> 
+            if (img.length && !img.find('.saved').length) {
+                $(`<a href="#" class="btn btn-square btn-success rounded-circle saved" style="position: relative;bottom: 5px;right: 20px;" role="button"><i class="fa fa-check" aria-hidden="true"></i></a> 
                 `).insertAfter(img);
                 closeModal('modal-img', false, () => {
                     halfmoon.toggleModal('modal-img');
@@ -1344,10 +1457,14 @@ function reviceMsg(data) {
                     reloadImage(image[0]);
                 }
             }
+            
             closeModal('modal-custom', 'chat', () => {
                 $('#modal-custom .modal-html table').prepend(dom.clone());
             });
             _record.btn = 'i[data-action="record_play"]';
+            if(data.textOnly){
+                 soundTip(g_config.tipSound || 'res/pop.mp3');
+            }
             break;
     }
 }
@@ -1381,7 +1498,6 @@ function broadcastMessage(msg, classes) {
 function addMsg(html) {
     var d = $(html);
     $('#content_chat table').prepend(d);
-    soundTip(g_config.tipSound || 'res/pop.mp3');
     return d;
 }
 
@@ -1410,7 +1526,6 @@ function parsePost(data, save = true) {
     clearInterval(g_cache.timer);
     setRotate(0);
     $('#cnt').attr('class', 'badge badge-primary text-light').show();
-
     var isFirst = g_cache.post == undefined;
     var isNew = !isFirst && g_cache.post.img != data.img;
     if (data.user != g_config.user.name || isFirst) {
@@ -1425,8 +1540,17 @@ function parsePost(data, save = true) {
     }
 
     if (isFirst || isNew) { // 图片有变动才在消息显示
+        $('[data-action="finish"]').show();
         reviceMsg({ type: 'msg', user: data.user, msg: '<img class="thumb" data-action="previewImage" src="' + g_cache.post.img + '">' });
-        $('#image').attr('src', g_cache.post.img);
+            $('#div_mainImg').css('height', '');
+
+         imagesLoaded($('#image').attr('src', g_cache.post.img)).on('progress', function(instance, image) {
+            if (image.isLoaded) {
+                $('#div_mainImg').height($('#image').height());
+                drawBoard();
+            }
+        });
+
         if (_viewer && _viewer.isShown) {
             _viewer.image.src = g_cache.post.img;
         }
@@ -1437,7 +1561,8 @@ function parsePost(data, save = true) {
         if (g_cache.post.time >= 0) {
             $('#cnt').html(getTime(g_cache.post.time));
         } else {
-            $('#cnt').attr('class', 'badge badge-success text-light');
+            $('#cnt').attr('class', 'badge badge-success text-black');
+            $('[data-action="finish"]').hide();
             clearInterval(g_cache.timer);
         }
     }, 1000);
@@ -1507,7 +1632,7 @@ function queryStricker(id, alert = true) {
             addStrick(json, alert);
             if (alert) toastPAlert('追加に成功しました', 3000, '', 'alert-success');
         } else {
-            if (alert) toastPAlert('もう一度試してください', 3000, '', 'alert-warning');
+            if (alert) toastPAlert('もう一度試してください', 3000, '', 'alert-secondary');
         }
     });
 }
@@ -1638,7 +1763,7 @@ function initStrickers() {
 }
 
 function test() {
-    
+
     // if(g_config.user.name == 'maki'){
     //     _audio.src = 'res/music.mp3';
     // }
@@ -1646,7 +1771,7 @@ function test() {
     //     _video.src = 'res/test.mp4';
     //     $(_video).show();
     // }
-
+    $('#switch-grid').prop('checked',g_config.grid.enable);
     drawBoard();
     // halfmoon.toastAlert('precompiled-alert-1', 17500);
     // halfmoon.toggleModal('modal-custom');

@@ -555,7 +555,7 @@ function doAction(dom, action, params) {
             $(dom).addClass('btn-primary');
 
             var time = new Date(new Date().getFullYear() + '/' + $(dom).html().replace('.', '/')).getTime();
-            queryMsg({ type: 'pics', time: time, max: 3600 * 24 * 1000 })
+            queryMsg({ type: 'pics', time: time, max: time + 3600 * 24 * 1000 })
             break;
         case 'downloadImageToServer':
             var src = $('#modal-img img').attr('src');

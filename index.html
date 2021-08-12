@@ -206,7 +206,7 @@
         <!-- Navbar start -->
         <nav class="navbar">
             <div class="navbar-content">
-                <button id="toggle-sidebar-btn" class="btn btn-action" type="button" onclick="halfmoon.toggleSidebar()">
+                <button id="toggle-sidebar-btn" class="btn btn-action" type="button" onclick="halfmoon.toggleSidebar();queryMsg({ type: 'online' });queryMsg({ type: 'pics_datas' });">
                     <i class="fa fa-bars" aria-hidden="true"></i>
                 </button>
             </div>
@@ -306,7 +306,7 @@
                     <div id='status' class="bg-dark-light"></div>
                 </div>
         </nav>
-        <div class="sidebar-overlay" onclick="halfmoon.toggleSidebar()"></div>
+        <div class="sidebar-overlay" onclick="halfmoon.toggleSidebar();"></div>
         <div class="sidebar" style="z-index: 2100">
             <div class="sidebar-menu">
                 <!-- <div class="sidebar-content">
@@ -315,7 +315,7 @@
                         Press <kbd>/</kbd> to focus
                     </div>
                 </div> -->
-                <h5 class="sidebar-title">統計</h5>
+                <h5 class="sidebar-title">統計<i class="fa fa-refresh float-right" onclick="queryMsg({ type: 'online' });" aria-hidden="true"></i></h5>
                 <div class="sidebar-divider"></div>
                 <div id='online_time'></div>
                 <br>

@@ -544,6 +544,9 @@ function doAction(dom, action, params) {
                 navbar: 0,
                 title: 0,
                 toggleOnDblclick: false,
+                url(image) {
+                    return image.src.replace('saves/_', 'saves/');
+                  },
             });
             _viewer.show();
             break;
@@ -1118,9 +1121,6 @@ function recon() {
     $('#status').attr('class', 'bg-dark-light');
     if (g_cache.logined) {
         initWebsock();
-        /*if(confirm('是否重连?')){
-            window.location.reload();
-        }*/
     }
 }
 
@@ -1289,7 +1289,7 @@ function reviceMsg(data) {
             }
             for (var key in data.data) {
                 var detail = data.data[key];
-                h += `<div class="div-photo" data-md5="` + key + `"><h6 class="text-center">` + getFormatedTime(1, new Date(detail.time)) + ' (' + detail.desc + `)</h6><img data-action="openViewer" src="` + g_imageHost + `saves/` + key + `.jpg" class="serverImg" alt="` + detail.desc + `">`;
+                h += `<div class="div-photo" data-md5="` + key + `"><h6 class="text-center">` + getFormatedTime(1, new Date(detail.time)) + ' (' + detail.desc + `)</h6><img data-action="openViewer" src="` + g_imageHost + `saves/_` + key + `.jpg" class="serverImg" alt="` + detail.desc + `">`;
                 if (g_config.user.name == 'maki') {
                     h += `<a href="#" class="btn btn-square btn-danger rounded-circle" data-action="deleteServerImage" role="button"><i class="fa fa-trash-o" aria-hidden="true"></i></a> 
                     `;

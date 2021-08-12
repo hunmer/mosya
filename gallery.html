@@ -11,9 +11,9 @@
     <meta name="author" content="">
     <meta name="keywords" content="">
     <link rel="icon" href="/static/halfmoon/img/halfmoon-fav-alt.png">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Cache-Control" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+    <!-- <meta http-equiv="Pragma" content="no-cache"> -->
+    <!-- <meta http-equiv="Cache-Control" content="no-cache"> -->
+    <!-- <meta http-equiv="Expires" content="0"> -->
     <!-- <meta http-equiv="Content-Security-Policy" content="block-all-mixed-content"> -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-touch-fullscreen" content="yes">
@@ -25,7 +25,9 @@
     <link rel="shortcut icon" href="favicon.ico">
     <title>模写記録</title>
     <link rel="stylesheet" href="css/viewer.min.css">
-    <link rel="stylesheet" type="text/css" href="./css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="css/default.css">
+    <link rel="stylesheet" type="text/css" href="css/default.date.css">
     <link href="css/halfmoon-variables.min.css" rel="stylesheet" />
     <style type="text/css">
     div.grid .photo {
@@ -120,7 +122,7 @@
         border-radius: 50%;
     }
 
-    #user-icons{
+    #user-icons {
         display: inline-flex;
         margin-top: 10px;
     }
@@ -128,7 +130,6 @@
     #user-icons div {
         margin-right: 10px;
     }
-
     </style>
 </head>
 
@@ -146,7 +147,7 @@
                 模写記録
             </a>
             <span id='cnt' class="navbar-text text-monospace"></span>
-            <div class="navbar-content mx-auto">
+            <div class="navbar-content ml-auto">
                 <div id='user-icons'>
                     <div onclick="setFilter(this, 'maki')">
                         <img src="res/maki.jpg" class="icon_lg">
@@ -155,6 +156,7 @@
                         <img src="res/chisato.jpg" class="icon_lg">
                     </div>
                 </div>
+                <input type="text" class="form-control timepicker text-center" style="width: 125px;" readonly placeholder="日付を選択">
             </div>
             <!--       <ul class="navbar-nav d-none d-md-flex">
         <li class="nav-item active">
@@ -201,63 +203,28 @@
     </div>
     <script src="js/jquery.min.js"></script>
     <script src="js/viewer.min.js"></script>
-    <script src="js/lazyload.min.js"></script>
     <script src="js/isotope.pkgd.js"></script>
     <script src="js/imagesloaded.pkgd.min.js"></script>
     <script src="js/halfmoon.min.js"></script>
+    <script src="js/picker.js"></script>
+    <script src="js/picker.date.js"></script>
+    <script src="js/ja_JP.js"></script>
     <script type="text/javascript">
-    // var g_imageHost = 'http://127.0.0.1/mosya-websocket/';
     var g_imageHost = 'https://mosya-server.glitch.me/';
+    var socket_url = 'wss:///mosya-server.glitch.me';
+
+    // var g_imageHost = 'http://127.0.0.1/mosya-websocket/';
+    // var socket_url = 'ws:///127.0.0.1:8000';
     var _viewer;
     var g_cache = {
         filter: '',
+        logined: false,
     }
     $(function() {
-
-
-        $.getJSON(g_imageHost + 'pics.json', function(json, textStatus) {
-            if (textStatus == 'success') {
-                var h = '<div class="grid-sizer"></div>';
-                var i = 0;
-                for (var md5 in json) {
-                    h += `
-                     <div class="grid-item">
-                        <img class="icon" src="res/` + json[md5].desc.replace('Upload by ', '') + `.jpg">
-                        <img class="photo lazyload" src="` + g_imageHost + `saves/` + md5 + `.jpg" title="` + getTime(new Date(json[md5].time)) + ' - ' + json[md5].desc + `">
-                    </div>`;
-                    i++;
-                }
-                $('#cnt').html(i + '枚');
-
-                // for (var i = 0; i < 2; i++) {
-                //     h += h;
-                // }
-                $('.grid').html(h).find('.lazyload').lazyload();
-                _viewer = new Viewer($('.grid')[0], {
-                    backdrop: 'static',
-                    toggleOnDblclick: false,
-                    filter(image) {
-                        return image.classList.contains('photo');
-                    },
-                    title: (image, imageData) => `${image.title} (${imageData.naturalWidth} × ${imageData.naturalHeight})`,
-                });
-                var $grid = $('.grid').isotope({
-                    itemSelector: '.grid-item',
-                    percentPosition: true,
-                    masonry: {
-                        columnWidth: '.grid-sizer'
-                    }
-                });
-                $grid.imagesLoaded().progress(function() {
-                    $grid.isotope('layout');
-                });
-            }
+        initWebsock();
+        $(document).on('click', '[data-action]', function(event) {
+            doAction(this, $(this).attr('data-action'));
         });
-
-
-    });
-    $(document).on('click', '[data-action]', function(event) {
-        doAction(this, $(this).attr('data-action'));
     });
 
     function getTime(date) {
@@ -275,10 +242,10 @@
 
     function setFilter(dom, search) {
         $('.selected').removeClass('selected');
-        if(g_cache.filter == search){
+        if (g_cache.filter == search) {
             search = '';
             g_cache.filter = '';
-        }else{
+        } else {
             $(dom).find('img').addClass('selected');
             g_cache.filter = search;
         }
@@ -287,12 +254,105 @@
             filter: function() {
                 var name = $(this).find('img[title]').attr('title');
                 var b = name.match(search);
-                if(b) i++;
+                if (b) i++;
                 return b;
             }
         });
         $('#cnt').html(i + '枚');
 
+    }
+
+    function parseData(json) {
+        var enable = [true];
+        var h = '<div class="grid-sizer"></div>';
+        var i = 0;
+        for (var md5 in json) {
+            var date = new Date(json[md5].time);
+            var day = date.getFullYear() + '/' + date.getMonth() + '/' + date.getDate();
+            if (enable[day] == undefined) {
+                enable[day] = day.split('/');
+            }
+            h += `
+                     <div class="grid-item" data-time="` + json[md5].time + `">
+                        <img class="icon" src="res/` + json[md5].desc.replace('Upload by ', '') + `.jpg">
+                        <img class="photo" data-src="` + g_imageHost + `saves/` + md5 + `.jpg" src="` + g_imageHost + `saves/_` + md5 + `.jpg" title="` + getTime(date) + ' - ' + json[md5].desc + `">
+                    </div>`;
+            i++;
+        }
+        $('#cnt').html(i + '枚');
+        $('.grid').html(h);
+
+        $('.timepicker').pickadate({
+            disable: Object.values(enable),
+            onSet: function(thingSet) {
+                setDataFilter(thingSet.select, thingSet.select + 3600 * 24 * 1000);
+            }
+        });
+
+        _viewer = new Viewer($('.grid')[0], {
+            backdrop: 'static',
+            toggleOnDblclick: false,
+            filter(image) {
+                return image.classList.contains('photo');
+            },
+            title: (image, imageData) => `${image.title} (${imageData.naturalWidth} × ${imageData.naturalHeight})`,
+            url(image) {
+                return image.src.replace('/_', '/');
+              },
+        });
+
+        var $grid = $('.grid').isotope({
+            itemSelector: '.grid-item',
+            percentPosition: true,
+            masonry: {
+                columnWidth: '.grid-sizer'
+            }
+        });
+        $grid.imagesLoaded().progress(function(instance, image) {
+            if(image.img.classList.contains('photo')){
+                $grid.isotope('layout');
+            }
+        });
+    }
+
+    function setDataFilter(start, end) {
+        console.log(start, end);
+        var i = 0;
+        $('.grid').isotope({
+            filter: function() {
+                var time = $(this).attr('data-time');
+                var b = start == undefined || time >= start && time <= end;
+                if (b) i++;
+                return b;
+            }
+        });
+        $('#cnt').html(i + '枚');
+    }
+
+    var connection;
+    initWebsock();
+
+    function initWebsock() {
+        if (connection != undefined) connection.close();
+        connection = new WebSocket(socket_url);
+        connection.onopen = () => {
+            g_cache.logined = true;
+            queryMsg({ type: 'pics' });
+        }
+
+        connection.onclose = () => {}
+
+        connection.onmessage = (e) => {
+            var data = JSON.parse(e.data);
+            if (data.type == 'pics') {
+                connection.close();
+                parseData(data.data);
+            }
+        }
+    }
+
+    function queryMsg(data) {
+        connection.send(JSON.stringify(data));
     }
     </script>
 </body>

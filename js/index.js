@@ -11,7 +11,7 @@ var g_api = 'https://neysummer-api.glitch.me/';
 
 
 // var socket_url = 'ws://127.0.0.1:8000';
-// // var socket_url = 'ws://192.168.31.189:8000';
+// //var socket_url = 'ws://192.168.31.189:8000';
 // var g_api = 'api/';
 // var g_imageHost = 'http://127.0.0.1/mosya-websocket/';
 
@@ -220,6 +220,7 @@ function init() {
                         break;
 
                     case 'input_bg':
+                        g_config.bg = rst.base64;
                         g_cache.uploaded_bg = rst.base64;
                         setBg(rst.base64);
                         break;
@@ -229,6 +230,29 @@ function init() {
                 // 处理失败会执行
             });
     });
+
+    window.history.pushState(null, null, "#");
+    window.addEventListener("popstate", function(event) {
+         if (_viewer && _viewer.isShown) {
+            _viewer.hide();
+        }else
+        if($('.modal.show').length){
+            halfmoon.toggleModal($('.modal.show')[0].id);
+        }else
+        if($('#page-wrapper').attr('data-sidebar-hidden') != 'hidden') {
+            halfmoon.toggleSidebar();
+        }else
+        if(g_cache.tab != undefined){
+            $('[data-action="toTab,chat"]')[0].click();
+        }else{
+            return;
+        }
+        window.history.pushState(null, null, "#");
+        event.preventDefault(true);
+        event.stopPropagation();
+    });
+
+
     $('#grid_x').val(g_config.grid.x || 5);
     $('#grid_y').val(g_config.grid.y || 5);
     $('#grid_size').val(g_config.grid.size || 1);
@@ -537,7 +561,9 @@ function doAction(dom, action, params) {
             halfmoon.toggleModal('modal-custom');
             break;
         case 'openSetting':
+            g_cache.bg =  g_config.bg || '';
             g_cache.closeCustom = () => {
+                g_config.bg = g_cache.bg;
                 setBg(g_config.bg);
             }
             $('#modal-custom').find('.modal-title').html('設定');
@@ -563,7 +589,7 @@ function doAction(dom, action, params) {
                         <label>背景</label>
                         <label class="float-right">背景ブラー</label>
                         <div class="row">
-                            <select class="form-control col-4" id="select-bg" onchange="if(this.value == 'custom'){var url = prompt('input url', 120);if (url != null && url != ''){$(this).find(':disabled').val(url).html(url).prop('selected', true);}}else if(this.value == 'upload'){$('#input_bg').click()}else{setBg(this.value)}">
+                            <select class="form-control col-4" id="select-bg" onchange="if(this.value == 'custom'){var url = prompt('input url', 120);if (url != null && url != ''){$(this).find(':disabled').val(url).html(url).prop('selected', true);}}else if(this.value == 'upload'){$('#input_bg').click()}else{g_cache.uploaded_bg=undefined;g_config.bg = this.value;setBg(this.value)}">
                                 <option value="" selected>なし</option>
                                 <option value="custom">URL</option>
                                 <option value="upload">アップロード</option>
@@ -594,13 +620,11 @@ function doAction(dom, action, params) {
                         </div>
                         
                         <button class="btn btn-primary btn-block mt-10" id="btn_upload" data-action="saveSetting">保存</button>
-                    </div>
-
                 `);
             halfmoon.toggleModal('modal-custom');
             $('#bg_blur').val(g_config.blur || 0);
             $('option[value="' + g_config.tipSound + '"]').prop('selected', true);
-            if(g_config.bg.substr(0, 5) == 'data:'){
+            if(typeof(g_config.bg) == 'string' && g_config.bg.substr(0, 5) == 'data:'){
                 $('#select-bg option[value="upload"]').prop('selected', true);
             }else{
                 $('option[value="' + g_config.bg + '"]').prop('selected', true);
@@ -799,8 +823,10 @@ function doAction(dom, action, params) {
             halfmoon.toggleModal('modal-stricker');
             if (g_stricker_options.last.id != '') {
                 var btn = $('[data-action="stricker_toTab"][data-id="' + g_stricker_options.last.id + '"]')[0];
-                btn.click();
-                btn.scrollIntoView();
+                if(btn){
+                    btn.click();
+                    btn.scrollIntoView();
+                }
             }
             for (var img of $('#stricker_tabs .loading')) {
                 reloadImage(img);
@@ -848,7 +874,7 @@ function doAction(dom, action, params) {
             }
             break;
         case 'video_set':
-            var m = prompt('VIDEO URL', 'https://www.youtube.com/watch?v=9MjAJSoaoSo');
+            var m = prompt('VIDEO URL', 'https://www.youtube.com/watch?v=W1nNBONFybk');
             if (m != '' && m != null) {
                 id = cutString(m + '&', '?v=', '&');
                 if (id !== '') {
@@ -1067,6 +1093,7 @@ function doAction(dom, action, params) {
             halfmoon.toggleModal('modal-upload');
             break;
         case 'toTab':
+            g_cache.tab =  action[1];
             $('#tabs .btn-primary').removeClass('btn-primary');
             $('[data-action="toTab,' + action[1] + '"]').addClass('btn-primary');
             var toolbar = action.length > 2 ? action[2] : action[1];
@@ -1676,6 +1703,7 @@ function parsePost(data, save = true) {
 // });
 function soundTip(url) {
     _audio2.src = url;
+    _audio2.play();
 }
 
 function getUserIcon(user) {

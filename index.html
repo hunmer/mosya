@@ -29,6 +29,8 @@
     <link rel="stylesheet" href="css/halfmoon.min.css">
     <link rel="stylesheet" type="text/css" href="./css/font-awesome.min.css">
     <link rel="stylesheet" href="css/halfmoon-variables.min.css">
+    <link rel="stylesheet" href="css/animate.min.css">
+
     <!-- <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet"> -->
     <link rel="stylesheet" href="css/index.css">
     <title>模写ルーム</title>
@@ -54,11 +56,11 @@
                     <label class="required">時間制限</label>
                     <div class="row">
                         <select class="form-control col-9" id="select-time" onchange="selectTime(this)">
-                            <option value="" selected disabled>選択してください</option>
+                            <option value="" disabled>選択してください</option>
                             <option value="5">5min</option>
                             <option value="10">10min</option>
                             <option value="20">20min</option>
-                            <option value="30">30min</option>
+                            <option value="30" selected>30min</option>
                             <option value="40">40min</option>
                             <option value="60">60min</option>
                             <option value="custom">カスタム</option>
@@ -114,7 +116,6 @@
                 <div class="row w-full">
                     <h5 class="modal-title text-center col-7">
                         <span class="text-truncate d-inline-block w-200"></span>
-                        <input type="text" style='display: none;max-width: unset;' class="form-control w-full" placeholder="キーワード&URL" onkeydown="if(event.keyCode == 13 && this.value != '') searchStrick(this.value);" value="">
                     </h5>
                     <i data-action="stricker_openURL" class="fa fa-external-link-square col-1 font-size-20 text-center" aria-hidden="true"></i>
                     <i class="fa fa-trash-o col-1 font-size-20 text-center" aria-hidden="true" data-action="stricker_delete"></i>
@@ -359,7 +360,7 @@
                         <canvas></canvas>
 
                         <div id='div_mainImg' style="max-width: 500px;margin: 0 auto;">
-                            <img id="image" data-action="openViewer" class='fullwidth' src="res/demo.jpg" alt="Picture">
+                            <img id="image" data-action="openViewer" class='fullwidth animated bounceInDown' animated='bounceInDown' src="res/demo.jpg" alt="Picture">
                         </div>
                     </div>
                 </div>
@@ -524,7 +525,7 @@
                 </div>
             </div>
         </div>
-        <nav class="navbar navbar-fixed-bottom" style="height: 8%">
+        <nav class="navbar navbar-fixed-bottom" style="height: 5%">
             <div class="container-fluid">
                 <div id="bottom_chat" class="row toolbar" style="width: 100%;">
                     <div class="col-10" style="color: #fff;border-radius: 20px;display: flex;align-items: center;">
@@ -533,7 +534,7 @@
                         <i class="fa fa-picture-o font-size-18 text-right col mr-10" aria-hidden="true" data-action="sendImage"></i>
                     </div>
                     <div class="col-2">
-                        <button class="btn btn-primary float-right w-full" type="button" data-action="sendMsg" style="max-width: 80%;border-radius: 20px;">
+                        <button class="btn btn-primary float-right w-full" type="button" data-action="sendMsg" style="max-width: 90%;border-radius: 20px;">
                             <i class="fa fa-paper-plane" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -575,7 +576,7 @@
     <script src="js/jquery.min.js"></script>
     <script src="js/halfmoon.min.js"></script>
     <script src="js/viewer.min.js"></script>
-    <script src="js/recorder.js"></script>
+    <!-- <script src="js/recorder.js"></script> -->
     <script src="js/lazyload.min.js"></script>
     <script src="js/imagesloaded.pkgd.min.js"></script>
     <script src="js/md5.js"></script>

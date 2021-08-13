@@ -95,8 +95,25 @@ function init() {
         _audio2.volume = 1;
         var next = g_cache.a_tts.pop();
         if (next != undefined) {
-            _tts.src = next;
+            _tts.parse(next);
         }
+    }
+
+    _tts.parse = (data) => {
+
+        if(data.meta){
+            switch(data.meta.type){
+                case 'time':
+                    addAnimation($('#cnt'), 'flash');
+                    break;
+
+                case 'chat':
+                    if(data.meta.user && data.meta.user == me()) return;
+                    break;
+            }
+        }
+        _tts.src = data.data;
+        _tts.play();
     }
 
     _tts.onplay = () => {
@@ -413,7 +430,7 @@ function checkStrickerMeta(id, sid, img) {
 function sendStricker() {
     var animation = g_cache.strick_last.animation;
     // TODO 默认预载图片
-    var data = { type: 'msg', msg: '<img class="thumb loading' + (animation ? ' gif' : '') + '" data-action="previewImage" data-src="' + (animation || g_cache.strick_last.img) + '">' };
+    var data = { type: 'msg', msg: '<img class="thumb loading animated bounceInDown' + (animation ? ' gif' : '') + '" animated="bounceInDown" data-action="previewImage" data-src="' + (animation || g_cache.strick_last.img) + '">' };
     if (g_cache.strick_last.audio) {
         data.audio = g_cache.strick_last.audio;
     }
@@ -812,10 +829,10 @@ function doAction(dom, action, params) {
             }
             break;
         case 'show_stricker_search':
-            var div = $('#modal-stricker .modal-title');
-            var opened = div.find('span').css('display') == 'none';
-            div.find('span').css('display', opened ? 'unset' : 'none');
-            div.find('input').css('display', opened ? 'none' : 'initial');
+            var search = prompt('キーワード&URL', 'kizuna');
+            if(search.length){
+                searchStrick(search);
+            }
             break;
         case 'show_stricker':
             initStrickers();
@@ -849,6 +866,7 @@ function doAction(dom, action, params) {
             saveImage(canvas, 'screen_' + new Date().getTime() + '.png');
             break;
         case 'fullContnet':
+            addAnimation($(dom), 'rubberBand');
             $('#image_div').toggle();
             $(dom).find('i').prop('class', 'fa fa-arrow-' + ($('#image_div').css('display') == 'none' ? 'down' : 'up'));
             break;
@@ -1039,6 +1057,7 @@ function doAction(dom, action, params) {
             if (msg == '') return;
             $('#msg').val('');
             $('#bottom_stricker').hide();
+            addAnimation($(dom), 'rubberBand');
             queryMsg({ type: 'msg', user: g_config.user.name, msg: msg, textOnly: true });
             break;
         case 'playerList':
@@ -1096,6 +1115,9 @@ function doAction(dom, action, params) {
             g_cache.tab =  action[1];
             $('#tabs .btn-primary').removeClass('btn-primary');
             $('[data-action="toTab,' + action[1] + '"]').addClass('btn-primary');
+            if(dom){
+                addAnimation($(dom), 'rubberBand');
+            }
             var toolbar = action.length > 2 ? action[2] : action[1];
             for (var con of $('.toolbar')) {
                 if (con.id == 'bottom_' + toolbar) {
@@ -1355,6 +1377,10 @@ function setRotate(rotate) {
         .removeClass('mirrorRotateVertical')[0].style.transform = 'rotate(' + rotate + 'deg)';
 }
 
+function me(){
+    return g_config.user.name;
+}
+
 
 function reviceMsg(data) {
     console.log(data);
@@ -1367,10 +1393,9 @@ function reviceMsg(data) {
         case 'tts':
             if (g_config.tts != undefined && !g_config.tts) return;
             if (_tts.paused) {
-                _tts.src = data.data;
-                _tts.play();
+                _tts.parse(data);
             } else {
-                g_cache.a_tts.push(data.data);
+                g_cache.a_tts.push(data);
             }
             break;
         case 'history_message':
@@ -1524,7 +1549,7 @@ function reviceMsg(data) {
             break;
         case 'msg':
         case 'voice':
-            var dom = addMsg(`<tr class="msg">
+            var dom = addMsg(`<tr class="msg hide">
                   <th>
                       <img src="` + getUserIcon(data.user) + `" class="rounded-circle user-icon" alt="` + data.user + `">
                   </th>
@@ -1574,6 +1599,7 @@ function reviceMsg(data) {
                 if (image.hasClass('loading')) {
                     reloadImage(image[0]);
                 }
+                addAnimation(image, 'rubberBand');
             }
             
             closeModal('modal-custom', 'chat', () => {
@@ -1616,6 +1642,7 @@ function broadcastMessage(msg, classes) {
 function addMsg(html) {
     var d = $(html);
     $('#content_chat table').prepend(d);
+    d.fadeIn('slow');
     return d;
 }
 
@@ -1658,6 +1685,7 @@ function parsePost(data, save = true) {
     }
 
     if (isFirst || isNew) { // 图片有变动才在消息显示
+        g_canva.hide();
         $('[data-action="finish"]').show();
         reviceMsg({ type: 'msg', user: data.user, msg: '<img class="thumb" data-action="previewImage" src="' + g_cache.post.img + '">' });
             $('#div_mainImg').css('height', '');
@@ -1665,12 +1693,14 @@ function parsePost(data, save = true) {
          imagesLoaded($('#image').attr('src', g_cache.post.img)).on('progress', function(instance, image) {
             if (image.isLoaded) {
                 $('#div_mainImg').height($('#image').height());
-                drawBoard();
+                setTimeout(() => {drawBoard()}, 3000);
             }
         });
 
         if (_viewer && _viewer.isShown) {
             _viewer.image.src = g_cache.post.img;
+        }else{
+            addAnimation($('#image'), 'zoomIn');
         }
     }
 
@@ -1910,7 +1940,8 @@ function test() {
     //     $(_video).show();
     // }
     $('#switch-grid').prop('checked',g_config.grid.enable);
-    drawBoard();
+                setTimeout(() => {drawBoard()}, 3000);
+
     // halfmoon.toastAlert('precompiled-alert-1', 17500);
     // halfmoon.toggleModal('modal-custom');
     // doAction(null, 'openSetting');

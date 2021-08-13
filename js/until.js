@@ -152,3 +152,20 @@ function toastPAlert(msg, time, title, type) {
         timeShown: time || 3000
     });
 }
+
+ function addAnimation(d, x, callback) {
+    var c = d.attr('Class');
+    if (d.attr('animated') != undefined) {
+        d.removeClass(d.attr('animated'))
+    }
+    d.attr('animated', x).addClass('animated ' + x).one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend',
+    
+    function() {
+        if ($(this).attr('animated') != undefined) {
+            $(this).removeClass('animated ' + $(this).attr('animated')).attr('animated', '');
+            if (callback != undefined) {
+                callback();
+            }
+        }
+    })
+}

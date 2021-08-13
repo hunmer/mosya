@@ -30,6 +30,14 @@ var g_cache = {
     a_tts: [],
 }
 var _viewer;
+halfmoon.toggleSidebar1 = halfmoon.toggleSidebar;
+halfmoon.toggleSidebar = () => {
+    if($(window).width() > 1580){
+        $('.sidebar')[0].style.cssText = "z-index: 2100; display: "+ ($('.sidebar').css('display') == 'block' ? 'none' : 'block')+" !important; left: -" + $('body').offset().left+'px';
+        return;
+    }
+    return halfmoon.toggleSidebar1();
+}
 $(function() {
     if (_GET['user']) {
         setUser(_GET['user']);
@@ -45,6 +53,8 @@ $(function() {
     }
     setUser(g_config.user.name, save);
 });
+
+
 
 function init() {
     if (g_cache.inited) return;
@@ -1271,8 +1281,8 @@ function initWebsock() {
         $('#status').attr('class', 'bg-success');
         queryMsg({ type: 'login', user: g_config.user });
         if(!g_cache.logined){
-            queryMsg({ type: 'pics_datas' });
-            queryMsg({ type: 'history_message' });
+            // queryMsg({ type: 'pics_datas' });
+            // queryMsg({ type: 'history_message' });
         }
         g_cache.logined = true;
         socketTest();
@@ -1541,7 +1551,8 @@ function reviceMsg(data) {
             break;
         case 'save':
             var img = $('[data-md5="' + data.data + '"]');
-            if (img.length && !img.find('.saved').length) {
+            console.log(img);
+            if (img.length && !img.parent().find('.saved').length) {
                 $(`<a href="#" class="btn btn-square btn-success rounded-circle saved" style="position: relative;bottom: 5px;right: 20px;" role="button"><i class="fa fa-check" aria-hidden="true"></i></a> 
                 `).insertAfter(img);
                 closeModal('modal-img', false, () => {
@@ -1586,6 +1597,9 @@ function reviceMsg(data) {
                         alertMsg(data);
                     }
                 }
+                //if(data.textOnly){
+                     soundTip(g_config.tipSound || 'res/pop.mp3');
+                //}
             }
             if (data.audio) {
                 $(`<a href="#" class="btn btn-square btn-success rounded-circle" data-action="play_strickerAudio" data-audio="` + data.audio + `" style="position: relative;bottom: 5px;right: 20px;" role="button"><i class="fa fa-play" aria-hidden="true"></i></a> 
@@ -1608,9 +1622,7 @@ function reviceMsg(data) {
                 $('#modal-custom .modal-html table').prepend(dom.clone());
             });
             _record.btn = 'i[data-action="record_play"]';
-            if(data.textOnly){
-                 soundTip(g_config.tipSound || 'res/pop.mp3');
-            }
+            
             break;
     }
 }

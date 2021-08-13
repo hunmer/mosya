@@ -25,6 +25,7 @@ var g_cache = {
     saveTag: {
         timer: 0,
     },
+    closeCustom: () => {},
     tags: [],
     a_tts: [],
 }
@@ -217,15 +218,21 @@ function init() {
                     case 'img_sendImage':
                         queryMsg({ type: 'msg', user: g_config.user.name, msg: '<img class="thumb" data-action="previewImage" src="' + rst.base64 + '" alt="Upload by ' + g_config.user.name + '">' });
                         break;
+
+                    case 'input_bg':
+                        g_cache.uploaded_bg = rst.base64;
+                        setBg(rst.base64);
+                        break;
                 }
             })
             .catch(function(err) {
                 // 处理失败会执行
             });
     });
-    $('#grid_x').val(g_config.grid.x);
-    $('#grid_y').val(g_config.grid.y);
-    $('#grid_size').val(g_config.grid.size);
+    $('#grid_x').val(g_config.grid.x || 5);
+    $('#grid_y').val(g_config.grid.y || 5);
+    $('#grid_size').val(g_config.grid.size || 1);
+    $('#grid_opacity').val(g_config.grid.opacity || 1);
     $('input[type=color]').val(g_config.grid.color);
     $('#div_mainImg').height($('#image').height());
     $(window).resize((e) => {
@@ -240,28 +247,47 @@ function setAudioSrc(player, src) {
     player.play();
 }
 
-function setGrid(type, add, min) {
+function setGrid(type, id, add, min) {
     var i;
-    if (min != undefined) {
+    if (min != undefined && typeof(add) == 'object') {
         i = add.value;
         if (i < min) {
             i = min;
             add.value = min;
         }
     } else {
-        i = Number($('#grid_' + type).val());
+        i = Number($(type + id).val());
         if (add > 0) {
-            i++;
+            i+=add;
+            if(min != undefined){
+                if(i > min) return
+                i= i.toFixed(1);
+            }
         } else
         if (add < 0) {
-            i--;
-            if (i < 1) return;
+            i-=Math.abs(add);
+            if(min == undefined){
+                min = 1;
+            }else{
+                i= i.toFixed(1);
+            }
+            if (i < min) return;
         }
     }
-    g_config.grid[type] = i;
-    local_saveJson('config', g_config);
-    $('#grid_' + type).val(i)
-    drawBoard();
+    switch(type){
+        case '#grid_':
+            g_config.grid[id] = i;
+            local_saveJson('config', g_config);
+            drawBoard();
+            break;
+
+        case '#bg_':
+            g_config[id] = i;
+            local_saveJson('config', g_config);
+            setBg(g_config.bg);
+            break;
+    }
+     $(type + id).val(i)
 }
 
 
@@ -500,17 +526,26 @@ function doAction(dom, action, params) {
             break;
         case 'saveSetting':
             g_config.tipSound = $('#select-tip').val();
+            var bg = $('#select-bg').val();
+            if(bg == 'upload' && g_cache.uploaded_bg != undefined){
+                bg = g_cache.uploaded_bg
+            }
+            g_config.bg = bg;
+            g_config.blur = $('#bg_blur').val();
             g_config.tts = $('#checkbox_tts').prop('checked');
             local_saveJson('config', g_config);
             halfmoon.toggleModal('modal-custom');
             break;
         case 'openSetting':
+            g_cache.closeCustom = () => {
+                setBg(g_config.bg);
+            }
             $('#modal-custom').find('.modal-title').html('設定');
             $('#modal-custom').attr('data-type', 'setting').find('.modal-html').html(`
                 <div class="form-group">
                         <label>ヒント音</label>
                         <div class="row">
-                            <select class="form-control col-4" id="select-tip" onchange="if (this.value == 'custom') {var url = prompt('input url', 120);if (url != null && url != '') $(this).find(':disabled').val(url).html(url).prop('selected', true);}else{soundTip(this.value)}">
+                            <select class="form-control col-4" id="select-tip" onchange="if (this.value == 'custom') {var url = prompt('input url', 'https://i.pinimg.com/564x/22/a9/ba/22a9ba4562c20c5d8cf43691cb95392d.jpg');if (url != null && url != '') $(this).find(':disabled').val(url).html(url).prop('selected', true);}else{soundTip(this.value)}">
                                 <option value="" selected>なし</option>
                                 <option value="res/tip_paopao.wav">シャボン玉</option>
                                 <option value="res/tip_dingdong.wav">ディンドン</option>
@@ -521,17 +556,55 @@ function doAction(dom, action, params) {
                                 <option value="custom">カスタム</option>
                             </select>
                             <div class="col-4"></div>
-                            <div class="custom-switch col-4">
-                                <input type="checkbox" id="checkbox_tts" value="">
-                                <label for="checkbox_tts">音読</label>
+                            <div class="col-4"></div>
+                        </div>
+                    </div>
+                    <div class="form-group mt-10">
+                        <label>背景</label>
+                        <label class="float-right">背景ブラー</label>
+                        <div class="row">
+                            <select class="form-control col-4" id="select-bg" onchange="if(this.value == 'custom'){var url = prompt('input url', 120);if (url != null && url != ''){$(this).find(':disabled').val(url).html(url).prop('selected', true);}}else if(this.value == 'upload'){$('#input_bg').click()}else{setBg(this.value)}">
+                                <option value="" selected>なし</option>
+                                <option value="custom">URL</option>
+                                <option value="upload">アップロード</option>
+                                <option value="" disabled>--------</option>
+                                <option value="res/bg.jpg">少女</option>
+                                <option value="res/カエル.jpg">カエル</option>
+                                <option value="res/ウサギ.jpg">ウサギ</option>
+                                <option value="res/スター.jpg">スター</option>
+                                <option value="res/紫色の花.jpg">紫色の花</option>
+                                <option value="res/紫色の星.jpg">紫色の星</option>
+                                <option value="res/ピクセル.jpg">ピクセル</option>
+                                <option value="res/ピクセル1.jpg">ピクセル1</option>
+                            </select>
+                            <div class="col-4"></div>
+                            <div class="input-group col-4">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" onclick="setGrid('#bg_', 'blur', -1, 0)">
+                                    <</span> </div> <input id='bg_blur' type="number" class="form-control" value="4" onkeyup="setGrid('#bg_', 'blur', this, 0)">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text" onclick="setGrid('#bg_', 'blur', 1)">></span>
+                                        </div>
+                                </div>
                             </div>
                         </div>
+                        <div class="custom-switch col-4 mt-10">
+                            <input type="checkbox" id="checkbox_tts" value="">
+                            <label for="checkbox_tts">音読</label>
+                        </div>
+                        
                         <button class="btn btn-primary btn-block mt-10" id="btn_upload" data-action="saveSetting">保存</button>
                     </div>
 
                 `);
             halfmoon.toggleModal('modal-custom');
+            $('#bg_blur').val(g_config.blur || 0);
             $('option[value="' + g_config.tipSound + '"]').prop('selected', true);
+            if(g_config.bg.substr(0, 5) == 'data:'){
+                $('#select-bg option[value="upload"]').prop('selected', true);
+            }else{
+                $('option[value="' + g_config.bg + '"]').prop('selected', true);
+            }
             $('#checkbox_tts').prop('checked', g_config.tts);
             break;
         case 'openViewer':
@@ -779,11 +852,19 @@ function doAction(dom, action, params) {
             if (m != '' && m != null) {
                 id = cutString(m + '&', '?v=', '&');
                 if (id !== '') {
-                    $.getJSON(g_api + 'search.php?server=youtube&type=id&id=' + id, function(json, textStatus) {
-                        if (textStatus == 'success') {
-                            queryMsg({ type: 'video', user: g_config.user.name, data: json });
-                        }
-                    });
+                    if(confirm('embed?')){
+                        queryMsg({type: 'play_url', data: {
+                            type: 'video_embed',
+                            url: 'https://www.youtube.com/embed/'+id,
+                            time: 0
+                        }});
+                    }else{
+                        $.getJSON(g_api + 'search.php?server=youtube&type=id&id=' + id, function(json, textStatus) {
+                            if (textStatus == 'success') {
+                                queryMsg({ type: 'video', user: g_config.user.name, data: json });
+                            }
+                        });
+                    }
                 }else{
                     queryMsg({type: 'play_url', data: {
                         type: 'video',
@@ -971,8 +1052,10 @@ function doAction(dom, action, params) {
             break;
         case 'darkMode':
             halfmoon.toggleDarkMode();
+            g_config.darkmode = $('body').hasClass('dark-mode');
+            local_saveJson('config', g_config);
             var i = $(dom).find('i');
-            if ($('body').hasClass('dark-mode')) {
+            if (g_config.darkmode) {
                 i.attr('class', 'fa fa-moon-o');
             } else {
                 i.attr('class', 'fa fa-sun-o');
@@ -1046,6 +1129,12 @@ function doAction(dom, action, params) {
 function playUrl(data) {
     var obj;
     switch (data.type) {
+        case 'video_embed':
+            $('iframe').attr('src',data.url).show();
+            _video.pause();
+            _audio.pause();
+            _video.hide();
+            break;
         case 'audio':
             obj = _audio;
             _video.pause();
@@ -1054,6 +1143,7 @@ function playUrl(data) {
 
         case 'video':
             obj = _video;
+            $('iframe').attr('src', '').hide();
             _audio.pause();
             closeModal('modal-custom', 'playerList', () => {
                 halfmoon.toggleModal('modal-custom');
@@ -1175,6 +1265,7 @@ function drawBoard() {
         return;
     }
     g_canva.show();
+    g_canva.css('opacity', g_config.grid.opacity || 1);
 
     //grid width and height
     var bw = $('#image').width()-4;
@@ -1762,8 +1853,27 @@ function initStrickers() {
     }
 }
 
+function setBg(bg){
+    var blur = '';
+    if(bg != ''){
+        bg = 'linear-gradient(rgb(35 35 35 / 25%), rgb(111 111 111 / 55%)), url('+bg+')';
+        if(g_config.blur > 0){
+            blur = 'saturate(180%) blur('+g_config.blur+'px)';
+        }
+    }
+    $('body').css('backgroundImage', bg).css('backdropFilter', blur);
+}
+
 function test() {
 
+
+    if(g_config.darkmode === false){
+        $('body').removeClass('dark-mode');
+    }
+    if(g_config.bg){
+        setBg(g_config.bg);
+        
+    }
     // if(g_config.user.name == 'maki'){
     //     _audio.src = 'res/music.mp3';
     // }
@@ -1775,7 +1885,7 @@ function test() {
     drawBoard();
     // halfmoon.toastAlert('precompiled-alert-1', 17500);
     // halfmoon.toggleModal('modal-custom');
-    //doAction(null, 'toTab,video');
+    // doAction(null, 'openSetting');
 }
 
 function socketTest() {

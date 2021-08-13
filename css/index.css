@@ -2,8 +2,25 @@
     font-family: janFont;
     src: url(../fonts/KosugiMaru-Regular.ttf);
 }
+/*background-color: #1d2023;*/
+:root {
+    /*--dm-navbar-bg-color: unset;*/
+    /*--lm-base-body-bg-image: linear-gradient(rgb(35 35 35 / 50%), rgb(111 111 111)),url(../res/bg.jpg),url(../res/bg.jpg);*/
+    --lm-base-body-bg-color: transparent;
+    --lm-navbar-bg-color: unset;
+    --lm-table-striped-bg-color: unset;
+    --lm-table-border-color: unset;
+    --lm-button-bg-color: unset;
+    --lm-sidebar-bg-color: unset;
+    --lm-button-primary-border-color: transparent;
+    --lm-button-primary-bg-color: #4ca9ff47;
+    /*--dm-base-body-bg-image: url(../res/bg.jpg);*/
+}
 
 body {
+    background-position: center top;
+    background-size: cover;
+    background-attachment: fixed;
     font-family: janFont, -apple-system, BlinkMacSystemFont, Roboto, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 

@@ -6,11 +6,14 @@ var _GET = getGETArray();
 var g_localKey = 'mosya_';
 // 本地储存前缀
 var g_config = local_readJson('config', {
+    bg: undefined,
+    blur: 0,
     grid: {
         x: 5,
         y: 5,
         color: 'black',
         size: 1,
+        opacity: 1,
         enable: false,
     },
     user: {

@@ -95,7 +95,7 @@
     <div class="modal modal-full" id="modal-custom" tabindex="-1" role="dialog" data-overlay-dismissal-disabled='...' data-esc-dismissal-disabled='...' style="z-index: 99999;">
         <div class="modal-dialog" role="document">
             <div class="modal-content modal-content-media w-500">
-                <a href="#" class="close" role="button" aria-label="Close" onclick="halfmoon.toggleModal('modal-custom');$('.navbar-fixed-bottom').css('zIndex', 1);">
+                <a href="#" class="close" role="button" aria-label="Close" onclick="halfmoon.toggleModal('modal-custom');$('.navbar-fixed-bottom').css('zIndex', 1);g_cache.closeCustom();g_cache.closeCustom = () => {}">
                     <span aria-hidden="true">&times;</span>
                 </a>
                 <h5 class="modal-title text-center">Title</h5>
@@ -136,7 +136,7 @@
                         </button> -->
                         </div>
                     </div>
-                    <div id='stricker_content' class="overflow-auto w-full h-200 mt-2" style="background-color: rgb(0 0 0 / 33%)">
+                    <div id='stricker_content' class="overflow-auto w-full h-200 mt-2">
                         <div id='stricker_search' class="row w-full h-200 stricker_content" style="align-items: center;display: none;">
                         </div>
                         <div id='stricker_like' class="row w-full h-200 stricker_content" style="align-items: center;display: none;">
@@ -167,6 +167,7 @@
         </div>
     </div>
     <input id="input_preview" class='inputstyle' type="file" accept="image/*" />
+    <input id="input_bg" class='inputstyle' type="file" accept="image/*" />
     <input id="img_sendImage" class='inputstyle' type="file" accept="image/*" />
     <audio id='tts' autoplay></audio>
     <audio id='soundTip' autoplay></audio>
@@ -253,10 +254,10 @@
                                 <label for="full-name">横</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
-                                        <span class="input-group-text" onclick="setGrid('x', -1)">
-                                            <</span> </div> <input id='grid_x' type="number" class="form-control" value="4" onkeyup="setGrid('x', this, 1)">
+                                        <span class="input-group-text" onclick="setGrid('#grid_', 'x', -1)">
+                                            <</span> </div> <input id='grid_x' type="number" class="form-control" value="4" onkeyup="setGrid('#grid_', 'x', this, 1)">
                                                 <div class="input-group-append">
-                                                    <span class="input-group-text" onclick="setGrid('x', 1)">></span>
+                                                    <span class="input-group-text" onclick="setGrid('#grid_', 'x', 1)">></span>
                                                 </div>
                                     </div>
                                 </div>
@@ -264,10 +265,10 @@
                                 <label for="full-name">縦</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
-                                        <span class="input-group-text" onclick="setGrid('y', -1)">
+                                        <span class="input-group-text" onclick="setGrid('#grid_', 'y', -1)">
                                             <</span> </div> <input id='grid_y' type="number" class="form-control" value="4">
                                                 <div class="input-group-append">
-                                                    <span class="input-group-text" onclick="setGrid('y', 1)" onkeyup="setGrid('y', this, 1)">></span>
+                                                    <span class="input-group-text" onclick="setGrid('#grid_', 'y', 1)" onkeyup="setGrid('#grid_', 'y', this, 1)">></span>
                                                 </div>
                                     </div>
                                 </div>
@@ -275,10 +276,21 @@
                                 <label for="full-name">太さ</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
-                                        <span class="input-group-text" onclick="setGrid('size', -0.1)">
-                                            <</span> </div> <input id='grid_size' type="number" class="form-control" value="1" onkeyup="setGrid('size', this, 0.1)">
+                                        <span class="input-group-text" onclick="setGrid('#grid_', 'size', -0.1)">
+                                            <</span> </div> <input id='grid_size' type="number" class="form-control" value="1" onkeyup="setGrid('#grid_', 'size', this, 0.1)">
                                                 <div class="input-group-append">
-                                                    <span class="input-group-text" onclick="setGrid('size', 0.1)">></span>
+                                                    <span class="input-group-text" onclick="setGrid('#grid_', 'size', 0.1)">></span>
+                                                </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                <label for="full-name">透明度</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text" onclick="setGrid('#grid_', 'opacity', -0.1, 0.1)">
+                                            <</span> </div> <input id='grid_opacity' type="number" class="form-control" value="1" onkeyup="setGrid('#grid_', 'opacity', this, 0.1)">
+                                                <div class="input-group-append">
+                                                    <span class="input-group-text" onclick="setGrid('#grid_', 'opacity', 0.1, 1)">></span>
                                                 </div>
                                     </div>
                                 </div>
@@ -352,7 +364,7 @@
                     </div>
                 </div>
             </div>
-            <div class="btn-toolbar p-5 bg-light-lm bg-very-dark-dm rounded" role="toolbar" aria-label="Another toolbar with button group and input group" id='tabs'>
+            <div class="btn-toolbar p-5 rounded" role="toolbar" id='tabs'>
                 <button class="btn btn-dark" data-action="fullContnet">
                     <i class="fa fa-arrow-up" aria-hidden="true"></i>
                 </button>
@@ -438,10 +450,13 @@
                 </div>
                 <div id='content_video' class='_content hide'>
                     <div class="row">
-                        <video id='video' class="col-12 hide" controls autoplay></video>
+                        <div class="col-12" style="height: 250px;">
+                            <iframe style="width: 100%;height: 100%;display: none;border: unset;"></iframe>
+                            <video id='video' class="hide" controls autoplay></video>
+                        </div>
                         <div class="col-12">
                             <div class="btn-toolbar p-5 rounded" role="toolbar">
-                                <button class="btn btn-dark" onclick="window.open('https://www.youtube.com/watch?v='+_video.vid, '_blank');">
+                                <button class="btn btn-dark" onclick="if(_video.vid) window.open('https://www.youtube.com/watch?v='+_video.vid, '_blank');">
                                     <i class="fa fa-external-link-square" aria-hidden="true"></i>
                                 </button>
                                 <div class="btn-group mx-auto" role="group">
@@ -512,13 +527,13 @@
         <nav class="navbar navbar-fixed-bottom" style="height: 8%">
             <div class="container-fluid">
                 <div id="bottom_chat" class="row toolbar" style="width: 100%;">
-                    <div class="col-10" style="background-color: #1d2023;border-radius: 20px;    display: flex;align-items: center;">
+                    <div class="col-10" style="color: #fff;border-radius: 20px;display: flex;align-items: center;">
                         <i data-action="show_stricker" class="fa fa-smile-o ml-10 font-size-18" aria-hidden="true"></i>
                         <input type="text" id='msg' class="form-control col-8 ml-10" placeholder="ここで入力する..." onkeydown="if(event.keyCode == 13) doAction(null, 'sendMsg')" style="    background-color: unset;border: unset;" oninput="checkStrickerTags(this)">
                         <i class="fa fa-picture-o font-size-18 text-right col mr-10" aria-hidden="true" data-action="sendImage"></i>
                     </div>
                     <div class="col-2">
-                        <button class="btn btn-primary float-right w-full" type="button" data-action="sendMsg" style="max-width: 80%;">
+                        <button class="btn btn-primary float-right w-full" type="button" data-action="sendMsg" style="max-width: 80%;border-radius: 20px;">
                             <i class="fa fa-paper-plane" aria-hidden="true"></i>
                         </button>
                     </div>

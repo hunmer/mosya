@@ -1268,11 +1268,13 @@ function initWebsock() {
     if (connection != undefined) connection.close();
     connection = new WebSocket(socket_url);
     connection.onopen = () => {
-        g_cache.logined = true;
         $('#status').attr('class', 'bg-success');
         queryMsg({ type: 'login', user: g_config.user });
-        queryMsg({ type: 'pics_datas' });
-        queryMsg({ type: 'history_message' });
+        if(!g_cache.logined){
+            queryMsg({ type: 'pics_datas' });
+            queryMsg({ type: 'history_message' });
+        }
+        g_cache.logined = true;
         socketTest();
     }
 

@@ -18,6 +18,7 @@
 }
 
 body {
+    color: #fff;
     max-width: 700px;
     display: none;
     background-position: center top;
@@ -38,6 +39,30 @@ body {
     display: none !important;
   }
 }
+
+@media (width: 1920px) {
+    #image_div {
+        position: fixed;
+        width: calc(100vw - 700px);
+        left: 700px;
+        height: 90%;
+    }
+    #image {
+        position: absolute;
+        left: 0;
+        padding: 10px;
+    }
+    button[data-action="fullContnet"] {
+        display: none;
+    }
+    canvas {
+        padding: 10px;
+    }
+    body {
+        left: unset;
+      }
+}
+
 
 .mirrorRotateLevel {
     /* 水平镜像翻转 */

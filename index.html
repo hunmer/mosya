@@ -179,7 +179,7 @@
         <div id='top_progress' class="progress-bar progress-bar-animated" role="progressbar" style="width: 20%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
     </div> -->
     <span id='cnt' onclick="if(_viewer.isShown) $('#ftb_icons').toggle();" class="badge badge-primary text-light">00:00</span>
-    <div id="page-wrapper" class="page-wrapper with-navbar with-sidebar with-navbar-fixed-bottom with-transitions"  data-sidebar-hidden="hidden" data-sidebar-type="full-height">
+    <div id="page-wrapper" class="page-wrapper with-navbar with-sidebar with-navbar-fixed-bottom with-transitions"  data-sidebar-hidden="hidden"">
         <!-- Sticky alerts -->
         <div class="sticky-alerts">
             <div id="FYsY6Z" class="alert dispose"><button class="close" data-dismiss="alert" type="button" aria-label="Close"><span aria-hidden="true">×</span></button>
@@ -320,7 +320,7 @@
                 </div>
         </nav>
         <div class="sidebar-overlay" onclick="halfmoon.toggleSidebar();"></div>
-        <div class="sidebar" style="z-index: 2100">
+        <div class="sidebar" style="z-index: 2100;background-color: rgba(0, 0, 0, .1);">
             <div class="sidebar-menu">
                 <!-- <div class="sidebar-content">
                     <input type="text" class="form-control" placeholder="Search">
@@ -354,14 +354,11 @@
             </div>
         </div>
         <div class="content-wrapper" style="height: 90%">
-            <div class="container-fluid p-10" id="image_div" style="max-width: 100%;">
-                <div style="width: 100%;text-align: center;">
-                    <div id='content'>
-                        <canvas></canvas>
-
-                        <div id='div_mainImg' style="max-width: 500px;margin: 0 auto;">
-                            <img id="image" data-action="openViewer" class='fullwidth animated bounceInDown' animated='bounceInDown' src="res/demo.jpg" alt="Picture">
-                        </div>
+            <div class="container-fluid p-10" id="image_div">
+                <div id='content' style="width: 100%;text-align: center;">
+                    <canvas></canvas>
+                    <div id='div_mainImg' style="max-width: 500px;margin: 0 auto;">
+                        <img id="image" data-action="openViewer" class='fullwidth animated bounceInDown' animated='bounceInDown' src="res/demo.jpg" alt="Picture" style="border-radius: 20px;">
                     </div>
                 </div>
             </div>

@@ -285,7 +285,6 @@ function init() {
     $('#grid_size').val(g_config.grid.size || 1);
     $('#grid_opacity').val(g_config.grid.opacity || 1);
     $('input[type=color]').val(g_config.grid.color);
-    $('#div_mainImg').height($('#image').height());
     $(window).resize((e) => {
         drawBoard();
     });

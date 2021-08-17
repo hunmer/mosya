@@ -243,7 +243,11 @@ function init() {
                         break;
 
                     case 'img_sendImage':
-                        queryMsg({ type: 'msg', user: g_config.user.name, msg: '<img class="thumb" data-action="previewImage" src="' + rst.base64 + '" alt="Upload by ' + g_config.user.name + '">' });
+                        var s = '<img class="thumb" data-action="previewImage" src="' + rst.base64 + '" alt="Upload by ' + g_config.user.name + '">';
+                        var m = md5(s);
+                        g_cache.sendedImgMd5 = m;
+                        g_cache.sendedImg = s;
+                        queryMsg({ type: 'msg', image: true, user: g_config.user.name, msg: s, md5: m });
                         break;
 
                     case 'input_bg':
@@ -913,6 +917,9 @@ function doAction(dom, action, params) {
             $(dom).find('i').prop('class', 'fa fa-arrow-' + ($('#image_div').css('display') == 'none' ? 'down' : 'up'));
             break;
         case 'sendImage':
+            if(g_cache.sendedImgMd5){
+                if(!confirm('まだアップロードされていない画像がまだ存在していますが、キャンセルされたのでしょうか？')) return;
+            }
             $('#img_sendImage').click();
             break;
         case 'playSong_fromMsg':
@@ -1292,7 +1299,33 @@ function updatePlaylist() {
 
 function queryMsg(data, user = false) {
     if (user) data.user = g_config.user.name;
-    connection.send(JSON.stringify(data));
+    var s = JSON.stringify(data);
+    var max = 30000;
+    var p = Math.ceil(s.length / max);
+    if(data.image && p > 0){
+        $('#modal-custom').find('.modal-title').html('アップロード');
+        $('#modal-custom').attr('data-type', 'chat').find('.modal-html').html(`
+            <div class="progress-group">
+              <div class="progress">
+                <div class="progress-bar progress-bar-animated" id='progress_part' role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="`+p+`"></div>
+              </div>
+              <span class="progress-group-label" id='span_part'>0%</span>
+            </div>
+            `);
+        halfmoon.toggleModal('modal-custom');
+        for(var i=0;i<=p;i++){
+            console.log(i, s.substr(i * max, max).length);
+            connection.send(JSON.stringify({
+                type: 'part',
+                data: s.substr(i * max, max),
+                index: i,
+                length: s.length,
+                parts: p,
+            }));
+        }
+    }else{
+        connection.send(s);
+    }
 }
 
 var connection;
@@ -1431,6 +1464,21 @@ function reviceMsg(data) {
     var type = data.type;
     delete data.type;
     switch (type) {
+        case 'sendedImg':
+            if(data.data == g_cache.sendedImgMd5){
+                reviceMsg({ type: 'msg', user: g_config.user.name, msg: g_cache.sendedImg});
+                delete g_cache.sendedImgMd5;
+                delete g_cache.sendedImg;
+            }
+            break;
+        case 'part':
+            var progress = parseInt(data.index / data.parts * 100);
+            $('#progress_part').css('width', progress + '%');
+            $('#span_part').html(progress + '%');
+            if(progress == 100){
+                halfmoon.toggleModal('modal-custom');
+            }
+            break;
         case 'play_url':
             playUrl(data.data);
             break;

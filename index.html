@@ -220,7 +220,7 @@
             </a>
             <div class="navbar-content ml-auto">
 
-                <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
+                <div class="btn-group" role="group">
                  <!-- <button class="btn btn-action" type="button" onclick="turnRight()">
                         <i class="fa fa-repeat" aria-hidden="true"></i>
                         <span class="sr-only"><-</span>
@@ -307,6 +307,25 @@
                             <a href="#" class="dropdown-item text-center text-primary" onclick="g_config.grid = {x: 5, y:5};$('#grid_y,#grid_x').val(5);drawBoard();local_saveJson('config', g_config);">リセット</a>
                         </div>
                   </div>
+                  <div class="btn-group dropdown with-arrow mr-10" role="group">
+                    <button class="btn btn-square" data-toggle="dropdown" type="button" id="dropdown-toggle-btn-1" aria-haspopup="true" aria-expanded="false">
+                      <i class="fa fa-search" aria-hidden="true"></i>
+                      <span class="sr-only">Seach</span> 
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-center">
+                        <div class="dropdown-content p-10">
+                            <input type="text" id='input_search' class='form-control' placeholder="検索" value="">
+                            <div class="row w-full mt-10">
+                                <i data-action="doSearch,pinterest" class="fa fa-pinterest col-2" aria-hidden="true"></i>
+                                <i data-action="doSearch,yandex" class="fa fa-yahoo col-2" aria-hidden="true"></i>
+                                <i data-action="doSearch,google" class="fa fa-google col-2" aria-hidden="true"></i>
+                                <i data-action="doSearch,huaban" class="fa fa-yelp col-2" aria-hidden="true"></i>
+                                <i data-action="doSearch,pixiv" class="fa fa-ra col-2" aria-hidden="true"></i>
+                                <i data-action="doSearch,yande" class="fa fa-slack col-2" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
                 </div>
 
 

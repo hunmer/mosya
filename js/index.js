@@ -488,6 +488,39 @@ function queryPlaylist(id){
 function doAction(dom, action, params) {
     var action = action.split(',');
     switch (action[0]) {
+        case 'doSearch':
+            switch(action[1]){
+                case 'yandex':
+                    s_url = 'https://yandex.com/images/search?text={s}';
+                    break;
+
+                case 'pinterest':
+                    s_url = 'https://www.pinterest.com/search/pins/?q={s}';
+                    break;
+
+                case 'google':
+                    s_url = 'https://www.google.com.tw/search?q={s}';
+                    break;
+
+                case 'huaban':
+                    s_url = 'https://huaban.com/search/?q={s}';
+                    break;
+
+                case 'pixiv':
+                    s_url = 'https://www.pixiv.net/tags/{s}';
+                    break;
+
+                case 'yande':
+                    s_url = 'https://yande.re/post?tags={s}';
+                    break;
+
+                default: return;
+            }
+            var s = $('#input_search').val();
+            if(s == '') return;
+            window.open(s_url.replace('{s}', s), '_blank');
+            halfmoon.deactivateAllDropdownToggles();
+            break;
         case 'finish':
             if(confirm('完成しましたか？')){
                 $(dom).hide();

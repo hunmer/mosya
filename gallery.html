@@ -233,6 +233,30 @@
         return (i < 10 ? '0' + i : i) + j;
     }
 
+    function _s1(s, j = '') {
+        s = parseInt(s);
+        return (s == 0 ? '' : (s < 10 ? '0' + s : s) + j);
+    }
+
+
+    function getTime1(s) {
+        s = Number(s);
+        if(s >= 86400){
+            return parseInt(s / 86400) + '天';
+        }
+        var h = 0,
+            m = 0;
+        if (s >= 3600) {
+            h = parseInt(s / 3600);
+            s %= 3600;
+        }
+        if (s >= 60) {
+            m = parseInt(s / 60);
+            s %= 60;
+        }
+        return _s1(h, '时') + _s(m, '分') + _s(parseInt(s), '秒');
+    }
+
     function doAction(dom, action, params) {
         var action = action.split(',');
         switch (action[0]) {}
@@ -270,10 +294,14 @@
             if (enable[day] == undefined) {
                 enable[day] = day.split('/');
             }
+            var desc = '['+getTime(date) + '] By ' + json[md5].user;
+            if(json[md5].spend != undefined){
+                desc += `(`+getTime1(json[md5].spend)+')';
+            }
             h += `
                      <div class="grid-item" data-time="` + json[md5].time + `">
-                        <img class="icon" src="res/` + json[md5].desc.replace('Upload by ', '') + `.jpg">
-                        <img class="photo" data-src="` + g_imageHost + `saves/` + md5 + `.jpg" src="` + g_imageHost + `saves/_` + md5 + `.jpg" title="` + getTime(date) + ' - ' + json[md5].desc + `">
+                        <img class="icon" src="res/` + json[md5].user + `.jpg">
+                        <img class="photo" data-src="` + g_imageHost + `saves/` + md5 + `.jpg" src="` + g_imageHost + `saves/_` + md5 + `.jpg" alt="` + desc + `" title="`+desc+`">
                     </div>`;
             i++;
         }
@@ -293,7 +321,7 @@
             filter(image) {
                 return image.classList.contains('photo');
             },
-            title: (image, imageData) => `${image.title} (${imageData.naturalWidth} × ${imageData.naturalHeight})`,
+            title: (image, imageData) => `${image.alt} (${imageData.naturalWidth} × ${imageData.naturalHeight})`,
             url(image) {
                 return image.src.replace('/_', '/');
               },

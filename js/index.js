@@ -232,7 +232,7 @@ function init() {
 
     $('input[type=file]').on('change', function(event) {
         var that = this;
-        lrz(that.files[0])
+        lrz(that.files[0], {width: 800, quality: 0.5})
             .then(function(rst) {
                 // console.log(rst);
                 //console.log(parseInt(that.files[0].size / 1024), parseInt(rst.fileLen / 1024));
@@ -243,7 +243,8 @@ function init() {
                         break;
 
                     case 'img_sendImage':
-                        var s = '<img class="thumb" data-action="previewImage" src="' + rst.base64 + '" alt="Upload by ' + g_config.user.name + '">';
+                        var s = '<img class="thumb" data-spend="'+parseInt(g_cache.post_start)+'" data-user="'+g_config.user.name+'" data-action="previewImage" src="' + rst.base64 + '" alt="Upload by ' + g_config.user.name + '">';
+                        console.log(s);
                         var m = md5(s);
                         g_cache.sendedImgMd5 = m;
                         g_cache.sendedImg = s;
@@ -364,7 +365,7 @@ function uploadImage(btn) {
         return;
     }
     g_cache.upload = true;
-    $(btn).html('Uploading...');
+    $(btn).html('アップロード中...');
 
     g_cache.post = {
         user: g_config.user.name,
@@ -442,6 +443,17 @@ function checkStrickerMeta(id, sid, img) {
 
 function sendStricker() {
     var animation = g_cache.strick_last.animation;
+    var key = g_cache.strick_last.id+','+g_cache.strick_last.sid;
+
+    var i = g_stricker_options.history.indexOf(key);
+    if(i != -1) g_stricker_options.history.splice(i, 1);
+    g_stricker_options.history.splice(0, 0, key);
+    if (g_stricker_options.history.length > 100) {
+        g_stricker_options.history.pop();
+    }
+    local_saveJson('stricker_options', g_stricker_options);
+    stricker_initHistory();
+
     // TODO 默认预载图片
     var data = { type: 'msg', msg: '<img class="thumb loading animated bounceInDown' + (animation ? ' gif' : '') + '" animated="bounceInDown" data-action="previewImage" data-src="' + (animation || g_cache.strick_last.img) + '">' };
     if (g_cache.strick_last.audio) {
@@ -492,6 +504,13 @@ function queryPlaylist(id){
 function doAction(dom, action, params) {
     var action = action.split(',');
     switch (action[0]) {
+        case 'previewImg_fromURL':
+            var url = prompt('url');
+            if(url != undefined && url.length){
+                $('#img_uploadImage').attr('src', url).attr('title', url).show();
+                $('#upload_title').val('from url');
+            }
+            break;
         case 'doSearch':
             switch(action[1]){
                 case 'yandex':
@@ -720,7 +739,7 @@ function doAction(dom, action, params) {
         case 'downloadImageToServer':
             var src = $('#modal-img img').attr('src');
             if (src.indexOf('http:') == -1) {
-                queryMsg({ type: 'save', data: src, desc: $('#modal-img .modal-title').html() });
+                queryMsg({ type: 'save', data: src, spend: $('#modal-img').attr('data-spend'), user: $('#modal-img').attr('data-user')});
             }
             break;
         case 'stricker_delete':
@@ -851,7 +870,7 @@ function doAction(dom, action, params) {
 
             var id = $(dom).attr('data-id');
             $('[data-action="stricker_delete"], [data-action="stricker_left"], [data-action="stricker_right"], [data-action="stricker_openURL"]').css('display', ['like', 'search'].indexOf(id) != -1 ? 'none' : 'unset')
-            $('#modal-stricker .modal-title span').html(id == 'like' ? 'お気に入り' : id == 'search' ? '検索' : g_stricker['id_' + id].name);
+            $('#modal-stricker .modal-title span').html(id == 'like' ? 'お気に入り' : id == 'search' ? '検索' : id == 'history' ? '歴史' : g_stricker['id_' + id].name);
 
             for (var div of $('.stricker_content')) {
                 if (div.id == 'stricker_' + id) {
@@ -1140,8 +1159,13 @@ function doAction(dom, action, params) {
             }
 
             $('[data-action="downloadImageToServer"]').css('display', dom.src.indexOf('data:image/') != -1 ? '' : 'none');
-            $('#modal-img img').attr('src', '').attr('src', dom.src);
+
             $('#modal-img .modal-title').html(dom.alt);
+
+             $('#modal-img').attr('data-spend', $(dom).attr('data-spend')).
+             attr('data-user', $(dom).attr('data-user')).
+             find('img').attr('src', '').attr('src', dom.src);
+
             halfmoon.toggleModal('modal-img');
             break;
         case 'darkMode':
@@ -1464,6 +1488,12 @@ function reviceMsg(data) {
     var type = data.type;
     delete data.type;
     switch (type) {
+        case 'timeSync':
+            if(g_cache.post != undefined){
+                g_cache.post.time = parseInt(data.data);
+                g_cache.post_start = data.start;
+            }
+            break;
         case 'sendedImg':
             if(data.data == g_cache.sendedImgMd5){
                 reviceMsg({ type: 'msg', user: g_config.user.name, msg: g_cache.sendedImg});
@@ -1511,6 +1541,7 @@ function reviceMsg(data) {
                     h += `<button class="btn" data-action="imageHistory_toDay" data-id="search">` + day + `</button>`;
                 }
             }
+            $('.sidebar-menu h3').html('第 ' + (days.length+1) + ' 日').show();
             $('#days_tabs div').html(h);
             if (data.removed) {
                 $('.div-photo[data-md5="' + data.removed + '"]').remove();
@@ -1612,6 +1643,7 @@ function reviceMsg(data) {
             break;
         case 'over':
             broadcastMessage('<b>時間切りです！</b>', 'bg-secondary');
+            g_cache.post.time = 0;
             break;
         case 'list':
             g_cache.players = data.data;
@@ -1624,6 +1656,7 @@ function reviceMsg(data) {
             }
             break;
         case 'post':
+            g_cache.post_start = data.start || 0;
             parsePost(data.data);
             break;
         case 'tip':
@@ -1631,7 +1664,6 @@ function reviceMsg(data) {
             break;
         case 'save':
             var img = $('[data-md5="' + data.data + '"]');
-            console.log(img);
             if (img.length && !img.parent().find('.saved').length) {
                 $(`<a href="#" class="btn btn-square btn-success rounded-circle saved" style="position: relative;bottom: 5px;right: 20px;" role="button"><i class="fa fa-check" aria-hidden="true"></i></a> 
                 `).insertAfter(img);
@@ -1771,7 +1803,7 @@ function parsePost(data, save = true) {
         g_cache.post = data;
     } else {
         // 自己上传完毕
-        $('#btn_upload').html('Upload');
+        $('#btn_upload').html('アップロードする');
         g_cache.upload = false;
         if ($('#modal-upload').hasClass('show')) {
             halfmoon.toggleModal('modal-upload');
@@ -1799,6 +1831,7 @@ function parsePost(data, save = true) {
     }
 
     g_cache.timer = setInterval(() => {
+        g_cache.post_start++;
         g_cache.post.time--;
         if (g_cache.post.time >= 0) {
             $('#cnt').html(getTime(g_cache.post.time));
@@ -2001,8 +2034,19 @@ function initStrickers() {
         }
         $('#stricker_like').html(h);
 
+        stricker_initHistory();
         g_cache.strickerInited = true;
     }
+}
+
+function stricker_initHistory(){
+    var h = '';
+    if(g_stricker_options.history == undefined) g_stricker_options.history = [];
+    for (var key of g_stricker_options.history) {
+        var args = key.split(',');
+        h += getStrickerHTML(args[0], args[1], true);
+    }
+    $('#stricker_history').html(h);
 }
 
 function setBg(bg){

@@ -25,6 +25,7 @@ var g_stricker = local_readJson('stricker', {"id_1202706":{"id":1202706,"name":"
 var g_stricker_options = local_readJson('stricker_options', {
     likes: [],
     tags: {},
+    history: [],
     last: {
         id: undefined,
         sid: undefined,

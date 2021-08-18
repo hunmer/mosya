@@ -45,8 +45,9 @@
                 </a>
                 <h5 class="modal-title">アップロード</h5>
                 <div class="text-center">
-                    <img src="" id='img_uploadImage' class="img-fluid rounded" alt="" style="display: none;" data-action="previewImage">
-                    <button class="btn btn-block btn-primary mb-10 mt-10" onclick="$('#input_preview').click();">画像を選択</button>
+                    <img src="" id='img_uploadImage' class="img-fluid rounded w-full" alt="" style="display: none;" data-action="previewImage">
+                    <button class="btn w-half btn-primary mb-10 mt-10" onclick="$('#input_preview').click();">画像を選択</button>
+                    <button class="btn w-half btn-primary mb-10 mt-10" data-action="previewImg_fromURL">URLから</button>
                 </div>
                 <div class="form-group">
                     <label for="username">タイトル</label>
@@ -55,7 +56,7 @@
                 <div class="form-group">
                     <label class="required">時間制限</label>
                     <div class="row">
-                        <select class="form-control col-9" id="select-time" onchange="selectTime(this)">
+                        <select class="form-control col-8" id="select-time" onchange="selectTime(this)">
                             <option value="" disabled>選択してください</option>
                             <option value="5">5min</option>
                             <option value="10">10min</option>
@@ -65,6 +66,7 @@
                             <option value="60">60min</option>
                             <option value="custom">カスタム</option>
                         </select>
+                        <div class="col-1"></div>
                         <button class="btn btn-primary col-3 p-0 hide" data-action="addTime">延长する</button>
                     </div>
                 </div>
@@ -132,6 +134,9 @@
                             <button class="btn" data-action="stricker_toTab" data-id="like">
                                 <i class="fa fa-heart" aria-hidden="true"></i>
                             </button>
+                            <button class="btn" data-action="stricker_toTab" data-id="history">
+                                <i class="fa fa-history" aria-hidden="true"></i>
+                            </button>
                             <!-- <button class="btn">
                             <img src='https://sdl-stickershop.line.naver.jp/products/0/0/1/9802/android/main.png'>
                         </button> -->
@@ -142,6 +147,9 @@
                         </div>
                         <div id='stricker_like' class="row w-full h-200 stricker_content" style="align-items: center;display: none;">
                         </div>
+                        <div id='stricker_history' class="row w-full h-200 stricker_content" style="align-items: center;display: none;">
+                        </div>
+
                     </div>
                     <div id='stricker_footer' class="row w-full mt-10">
                         <div class="col-4 p-10">
@@ -179,7 +187,7 @@
         <div id='top_progress' class="progress-bar progress-bar-animated" role="progressbar" style="width: 20%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
     </div> -->
     <span id='cnt' onclick="if(_viewer.isShown) $('#ftb_icons').toggle();" class="badge badge-primary text-light">00:00</span>
-    <div id="page-wrapper" class="page-wrapper with-navbar with-sidebar with-navbar-fixed-bottom with-transitions"  data-sidebar-hidden="hidden"">
+    <div id="page-wrapper" class="page-wrapper with-navbar with-sidebar with-navbar-fixed-bottom with-transitions"  data-sidebar-hidden="hidden">
         <!-- Sticky alerts -->
         <div class="sticky-alerts">
             <div id="FYsY6Z" class="alert dispose"><button class="close" data-dismiss="alert" type="button" aria-label="Close"><span aria-hidden="true">×</span></button>
@@ -316,12 +324,12 @@
                         <div class="dropdown-content p-10">
                             <input type="text" id='input_search' class='form-control' placeholder="検索" value="">
                             <div class="row w-full mt-10">
-                                <i data-action="doSearch,pinterest" class="fa fa-pinterest col-2" aria-hidden="true"></i>
-                                <i data-action="doSearch,yandex" class="fa fa-yahoo col-2" aria-hidden="true"></i>
-                                <i data-action="doSearch,google" class="fa fa-google col-2" aria-hidden="true"></i>
-                                <i data-action="doSearch,huaban" class="fa fa-yelp col-2" aria-hidden="true"></i>
-                                <i data-action="doSearch,pixiv" class="fa fa-ra col-2" aria-hidden="true"></i>
-                                <i data-action="doSearch,yande" class="fa fa-slack col-2" aria-hidden="true"></i>
+                                <button class="btn btn-block" type="button" data-action="doSearch,pinterest">pinterest</button>
+                                <button class="btn btn-block mt-5" type="button" data-action="doSearch,yandex">yandex</button>
+                                <button class="btn btn-block mt-5" type="button" data-action="doSearch,google">google</button>
+                                <button class="btn btn-block mt-5" type="button" data-action="doSearch,huaban">huaban</button>
+                                <button class="btn btn-block mt-5" type="button" data-action="doSearch,pixiv">pixiv</button>
+                                <button class="btn btn-block mt-5" type="button" data-action="doSearch,yande">yande</button>
                             </div>
                         </div>
                     </div>
@@ -347,6 +355,7 @@
                         Press <kbd>/</kbd> to focus
                     </div>
                 </div> -->
+                <h3 class="text-center hide">第 10 日</h3>
                 <h5 class="sidebar-title">統計<i class="fa fa-refresh float-right" onclick="queryMsg({ type: 'online' });" aria-hidden="true"></i></h5>
                 <div class="sidebar-divider"></div>
                 <div id='online_time'></div>

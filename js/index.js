@@ -8,7 +8,7 @@ var g_json;
 var socket_url = 'wss:///mosya-server.glitch.me';
 var g_imageHost = 'https://mosya-server.glitch.me/';
 var g_api = 'https://neysummer-api.glitch.me/';
-
+var g_test = false;
 
 // var socket_url = 'ws://127.0.0.1:8000';
 // //var socket_url = 'ws://192.168.31.189:8000';
@@ -81,9 +81,11 @@ function init() {
 
     _audio.onplay = () => {
         $('i[data-action="audio_play"]').prop('class', 'fa fa-pause');
+         $('#bottom_music .cover').removeClass('paused');
     }
     _audio.onpause = () => {
         $('i[data-action="audio_play"]').prop('class', 'fa fa-play');
+        $('#bottom_music .cover').addClass('paused');
     }
 
     _audio.oncanplay = () => {
@@ -504,6 +506,27 @@ function queryPlaylist(id){
 function doAction(dom, action, params) {
     var action = action.split(',');
     switch (action[0]) {
+        case 'playUrl_fromMsg':
+            playUrl(JSON.parse($(dom).attr('data-json')));
+            toastPAlert('解析成功!', 1000, '', 'alert-success');
+            break;
+        case 'audio_volume':
+            if(_audio.volume == 1){
+                _audio.volume = 0;
+            }
+            _audio.volume += Math.min(1 - _audio.volume, 0.1);
+            g_config.volume = _audio.volume;
+            local_saveJson('config', g_config);
+            toastPAlert('volume : ' + parseInt(_audio.volume * 100) + '%', 1000, '', 'alert-secondary');
+            break;
+        case 'audio_share':
+            queryMsg({type: 'play_url', data: {
+                type: 'audio',
+                url: _audio.src,
+                time: 0,
+            }}, true);
+            toastPAlert('共有成功!', 1000, '', 'alert-success');
+            break;
         case 'previewImg_fromURL':
             var url = prompt('url');
             if(url != undefined && url.length){
@@ -949,9 +972,9 @@ function doAction(dom, action, params) {
             break;
         case 'playlist_set':
             halfmoon.deactivateAllDropdownToggles()
-            var m = prompt('PLAYLIST URL', 'https://www.youtube.com/playlist?list=PLhZZuOohK5a09TxrOHvwECzWlkLPXb5n6');
+            var m = prompt('PLAYLIST URL', g_test ? 'https://www.youtube.com/playlist?list=PLhZZuOohK5a09TxrOHvwECzWlkLPXb5n6' : '');
             if (m != '' && m != null) {
-                m = cutString(m + '&', '?list=', '&');
+                m = cutString(m + '&', 'list=', '&');
                 if (m == '') {
                     alert('錯誤的url');
                     return;
@@ -960,7 +983,7 @@ function doAction(dom, action, params) {
             }
             break;
         case 'video_set':
-            var m = prompt('VIDEO URL', 'https://www.youtube.com/watch?v=W1nNBONFybk');
+            var m = prompt('VIDEO URL', g_test ? 'https://www.youtube.com/watch?v=W1nNBONFybk' : '');
             if (m != '' && m != null) {
                 id = cutString(m + '&', '?v=', '&');
                 if (id !== '') {
@@ -969,7 +992,7 @@ function doAction(dom, action, params) {
                             type: 'video_embed',
                             url: 'https://www.youtube.com/embed/'+id,
                             time: 0
-                        }});
+                        }}, true);
                     }else{
                         $.getJSON(g_api + 'search.php?server=youtube&type=id&id=' + id, function(json, textStatus) {
                             if (textStatus == 'success') {
@@ -982,14 +1005,14 @@ function doAction(dom, action, params) {
                         type: 'video',
                         url: m,
                         time: 0
-                    }});
+                    }}, true);
                 }
             }
             break;
 
         case 'playlist_add':
             halfmoon.deactivateAllDropdownToggles()
-            var m = prompt('VIDEO URL', 'https://www.youtube.com/watch?v=9MjAJSoaoSo');
+            var m = prompt('VIDEO URL', g_test ? 'https://www.youtube.com/watch?v=9MjAJSoaoSo' : '');
             if (m != '' && m != null) {
                 id = cutString(m + '&', 'youtube.com/watch?v=', '&');
                 if (id !== '') {
@@ -1003,7 +1026,7 @@ function doAction(dom, action, params) {
                         type: 'audio',
                         url: m,
                         time: 0
-                    }});
+                    }}, true);
                 }
             }
             break;
@@ -1248,7 +1271,7 @@ function doAction(dom, action, params) {
     }
 }
 
-function playUrl(data) {
+function playUrl(data, user) {
     var obj;
     switch (data.type) {
         case 'video_embed':
@@ -1259,12 +1282,22 @@ function playUrl(data) {
             break;
         case 'audio':
             obj = _audio;
+            if(obj.src == data.url && !obj.paused) return;
             _video.pause();
             $('#bottom_music img').attr('src', 'res/cd.png');
+
+            if(user){
+                reviceMsg({
+                    type: 'msg',
+                    user: user,
+                    msg: `<a data-action="playUrl_fromMsg" data-json="`+JSON.stringify(data)+`" href="javascript: void(0);">▶ : 音源</a>`
+                });
+            }
             break;
 
         case 'video':
             obj = _video;
+            if(obj.src == data.url && !obj.paused) return;
             $('iframe').attr('src', '').hide();
             _audio.pause();
             closeModal('modal-custom', 'playerList', () => {
@@ -1510,7 +1543,7 @@ function reviceMsg(data) {
             }
             break;
         case 'play_url':
-            playUrl(data.data);
+            playUrl(data.data, data.user);
             break;
         case 'tts':
             if (g_config.tts != undefined && !g_config.tts) return;
@@ -2062,6 +2095,7 @@ function setBg(bg){
 
 function test() {
 
+    _audio.volume = g_config.volume || 1;
 
     if(g_config.darkmode === false){
         $('body').removeClass('dark-mode');

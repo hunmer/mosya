@@ -1,3 +1,17 @@
+
+.img_active {
+    border: 2px solid var(--danger-color);
+}
+
+.img_active1 {
+    border: 2px solid var(--primary-color);
+}
+
+.full-wdith-img {
+    width: 100%;
+    padding: 10px;
+}
+
 @font-face {
     font-family: janFont;
     src: url(../fonts/KosugiMaru-Regular.ttf);
@@ -35,7 +49,7 @@
 }     
 
 body {
-    overflow-x: hidden;
+    overflow-x: hidden !important; 
     color: #fff;
     max-width: 700px;
     display: none;
@@ -252,7 +266,7 @@ body {
     width: 150px;
 }
 
-#cnt {
+#ftb {
     position: fixed;
     right: 5%;
     bottom: 10%;

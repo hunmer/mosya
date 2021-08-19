@@ -11,7 +11,7 @@ var g_api = 'https://neysummer-api.glitch.me/';
 var g_test = false;
 
 // var socket_url = 'ws://127.0.0.1:8000';
-// //var socket_url = 'ws://192.168.31.189:8000';
+// // var socket_url = 'ws://192.168.31.206:8000';
 // var g_api = 'api/';
 // var g_imageHost = 'http://127.0.0.1/mosya-websocket/';
 
@@ -53,8 +53,6 @@ $(function() {
     }
     setUser(g_config.user.name, save);
 });
-
-
 
 function init() {
     if (g_cache.inited) return;
@@ -506,6 +504,65 @@ function queryPlaylist(id){
 function doAction(dom, action, params) {
     var action = action.split(',');
     switch (action[0]) {
+        case 'pose_search':
+            if($('#content_lab').attr('data-list') == 'true'){
+                initPoseContent(g_pose.datas, false);
+            }else{
+                toPage(1);
+            }
+            break;
+        case 'pose_selectd':
+            if(checkPoseSelected() > 0){
+                g_cache.closeCustom = () => {
+                    checkPoseSelected('#modal-custom [data-action="selectImg"]', true);
+                }
+                $('#modal-custom').find('.modal-title').html('pose');
+                $('#modal-custom').attr('data-type', 'chat').find('.modal-html').html(`
+                    <div class="row w-full mt-10">
+                    ` + pose_getImgsHtml(g_pose_selected) + '</div>');
+                halfmoon.toggleModal('modal-custom');
+            }
+            break;
+        case 'pose_send':
+            if(checkPoseSelected() > 0){
+                var time = parseInt(prompt('interval time', 180));
+                if(time > 0){
+                    queryMsg({ type: 'pose_list', data: g_pose_selected, time: time}, true);
+                }
+            }else{
+                toastPAlert('没有选中任何图片!', 1000, '', 'alert-danger');
+            }
+            break;
+        case 'pose_selectAll':
+            var imgs = $('[data-action="selectImg"]');
+            if($('.img_active').length){
+                g_cache.pose_selected -= $('.img_active').removeClass('img_active').length;
+            }else{
+                 g_cache.pose_selected += imgs.addClass('img_active').length;
+            }
+            $('[data-action="pose_selectd"]').html(g_cache.pose_selected);
+            break;
+        case 'selectPage':
+            var page = parseInt(prompt('input page(1-'+g_cache.pose_maxPage+'):', g_cache.pose_page));
+            if(page > g_cache.pose_maxPage || page <= 0){
+                alert('error');
+                return;
+            }
+            toPage(page);
+            break;
+        case 'selectImg':
+            if($(dom).toggleClass('img_active').hasClass('img_active')){
+                g_cache.pose_selected++;
+            }else{
+                g_cache.pose_selected--;
+            }
+            $('[data-action="pose_selectd"]').html(g_cache.pose_selected);
+            break;
+        case 'selectImg1': // 展示图片
+            $('.img_active1').removeClass('img_active1');
+            $(dom).addClass('img_active1');
+            pose_nextImg(parseInt($(dom).attr('data-index')));
+            break;
         case 'playUrl_fromMsg':
             playUrl(JSON.parse($(dom).attr('data-json')));
             toastPAlert('解析成功!', 1000, '', 'alert-success');
@@ -1521,6 +1578,9 @@ function reviceMsg(data) {
     var type = data.type;
     delete data.type;
     switch (type) {
+        case 'pose_list':
+            parsePoseData(data.data, data.time, false);
+            break;
         case 'timeSync':
             if(g_cache.post != undefined){
                 g_cache.post.time = parseInt(data.data);
@@ -1588,7 +1648,7 @@ function reviceMsg(data) {
             }
             for (var key in data.data) {
                 var detail = data.data[key];
-                h += `<div class="div-photo" data-md5="` + key + `"><h6 class="text-center">` + getFormatedTime(1, new Date(detail.time)) + ' (' + detail.desc + `)</h6><img data-action="openViewer" src="` + g_imageHost + `saves/_` + key + `.jpg" class="serverImg" alt="` + detail.desc + `">`;
+                h += `<div class="div-photo" data-md5="` + key + `"><h6 class="text-center">` + getFormatedTime(1, new Date(detail.time)) + ' (' + detail.user + `)</h6><img data-action="openViewer" src="` + g_imageHost + `saves/_` + key + `.jpg" class="serverImg" alt="` + detail.user + `">`;
                 if (g_config.user.name == 'maki') {
                     h += `<a href="#" class="btn btn-square btn-danger rounded-circle" data-action="deleteServerImage" role="button"><i class="fa fa-trash-o" aria-hidden="true"></i></a> 
                     `;
@@ -1676,7 +1736,9 @@ function reviceMsg(data) {
             break;
         case 'over':
             broadcastMessage('<b>時間切りです！</b>', 'bg-secondary');
-            g_cache.post.time = 0;
+            if(g_cache.post) g_cache.post.time = 0;
+            if(g_cache.poseTime) g_cache.poseTime = 0;
+            $('#ftb').hide();
             break;
         case 'list':
             g_cache.players = data.data;
@@ -1827,7 +1889,7 @@ function closeModal(id, type, fun) {
 }
 
 function parsePost(data, save = true) {
-    clearInterval(g_cache.timer);
+    $('#content_lab .row, #content_lab nav').html('');
     setRotate(0);
     $('#cnt').attr('class', 'badge badge-primary text-light').show();
     var isFirst = g_cache.post == undefined;
@@ -1849,29 +1911,42 @@ function parsePost(data, save = true) {
         reviceMsg({ type: 'msg', user: data.user, msg: '<img class="thumb" data-action="previewImage" src="' + g_cache.post.img + '">' });
             $('#div_mainImg').css('height', '');
 
-         imagesLoaded($('#image').attr('src', g_cache.post.img)).on('progress', function(instance, image) {
-            if (image.isLoaded) {
-                $('#div_mainImg').height($('#image').height());
-                setTimeout(() => {drawBoard()}, 3000);
-            }
-        });
-
-        if (_viewer && _viewer.isShown) {
-            _viewer.image.src = g_cache.post.img;
-        }else{
-            addAnimation($('#image'), 'zoomIn');
-        }
+        loadImage(g_cache.post.img);
+        
     }
+    $('#cnt1').hide();
+    enableTimer(() => {
+        return g_cache.post.time--;
+    });
+}
 
+function loadImage(src, anime = true){
+    imagesLoaded($('#image').attr('src', src)).on('progress', function(instance, image) {
+        if (image.isLoaded) {
+            $('#div_mainImg').height($('#image').height());
+            setTimeout(() => {drawBoard()}, 1500);
+        }
+    });
+    if (_viewer && _viewer.isShown) {
+        _viewer.image.src = src;
+    }else{
+        if(anime) addAnimation($('#image'), 'zoomIn');
+    }
+}
+
+function enableTimer(run, callback){
+    clearInterval(g_cache.timer);
+    $('#ftb').show();
     g_cache.timer = setInterval(() => {
         g_cache.post_start++;
-        g_cache.post.time--;
-        if (g_cache.post.time >= 0) {
-            $('#cnt').html(getTime(g_cache.post.time));
+        var time = run();
+        if (time >= 0) {
+            $('#cnt').html(getTime(time));
         } else {
-            $('#cnt').attr('class', 'badge badge-success text-black');
-            $('[data-action="finish"]').hide();
+            // $('#cnt').attr('class', 'badge badge-success text-black');
+            $('#ftb, [data-action="finish"]').hide();
             clearInterval(g_cache.timer);
+            if(typeof(callback) == 'function') callback();
         }
     }, 1000);
 }
@@ -2094,7 +2169,9 @@ function setBg(bg){
 }
 
 function test() {
-
+    if(g_config.poseSlug){
+        $('#select-slug option[value="'+g_config.poseSlug+'"]').prop('selected', true)
+    }
     _audio.volume = g_config.volume || 1;
 
     if(g_config.darkmode === false){
@@ -2117,6 +2194,9 @@ function test() {
     // halfmoon.toastAlert('precompiled-alert-1', 17500);
     // halfmoon.toggleModal('modal-custom');
     // doAction(null, 'openSetting');
+    //setTimeout(() => {doAction(null, 'toTab,lab')}, 500);
+    
+
 }
 
 function socketTest() {

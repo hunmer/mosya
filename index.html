@@ -30,6 +30,7 @@
     <link rel="stylesheet" type="text/css" href="./css/font-awesome.min.css">
     <link rel="stylesheet" href="css/halfmoon-variables.min.css">
     <link rel="stylesheet" href="css/animate.min.css">
+    <link rel="stylesheet" href="css/range.css">
 
     <!-- <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet"> -->
     <link rel="stylesheet" href="css/index.css">
@@ -99,7 +100,7 @@
     <div class="modal modal-full" id="modal-custom" tabindex="-1" role="dialog" data-overlay-dismissal-disabled='...' data-esc-dismissal-disabled='...' style="z-index: 99999;">
         <div class="modal-dialog" role="document">
             <div class="modal-content modal-content-media w-500">
-                <a href="#" class="close" role="button" aria-label="Close" onclick="halfmoon.toggleModal('modal-custom');$('.navbar-fixed-bottom').css('zIndex', 1);g_cache.closeCustom();g_cache.closeCustom = () => {}">
+                <a href="javascript: void(0);" class="close" role="button" aria-label="Close" onclick="halfmoon.toggleModal('modal-custom');$('.navbar-fixed-bottom').css('zIndex', 1);g_cache.closeCustom();g_cache.closeCustom = () => {}">
                     <span aria-hidden="true">&times;</span>
                 </a>
                 <h5 class="modal-title text-center">Title</h5>
@@ -112,7 +113,7 @@
     <div class="modal modal-full" id="modal-stricker" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content modal-content-media w-500">
-                <a href="#" class="close" role="button" aria-label="Close" onclick="halfmoon.toggleModal('modal-stricker')">
+                <a href="javascript: void(0);" class="close" role="button" aria-label="Close" onclick="halfmoon.toggleModal('modal-stricker')">
                     <span aria-hidden="true">&times;</span>
                 </a>
                 <div class="row w-full">
@@ -186,7 +187,11 @@
     <!-- <div class="progress" style="height: 3px;z-index: 99999999;position: fixed;top: 0;width: 100%;">
         <div id='top_progress' class="progress-bar progress-bar-animated" role="progressbar" style="width: 20%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
     </div> -->
-    <span id='cnt' onclick="if(_viewer.isShown) $('#ftb_icons').toggle();" class="badge badge-primary text-light">00:00</span>
+    <div id='ftb'>
+        <span id='cnt' onclick="if(_viewer.isShown) $('#ftb_icons').toggle();" class="badge badge-primary text-light">00:00</span>
+        </br>
+        <span id='cnt1' class="badge badge-primary text-light mt-10 hide">1/20</span>
+    </div>
     <div id="page-wrapper" class="page-wrapper with-navbar with-sidebar with-navbar-fixed-bottom with-transitions"  data-sidebar-hidden="hidden">
         <!-- Sticky alerts -->
         <div class="sticky-alerts">
@@ -400,6 +405,7 @@
                     </button>
                     <button class="btn" type="button" data-action="toTab,music"><i class="fa fa-music" aria-hidden="true"></i></button>
                     <button class="btn" type="button" data-action="toTab,video,chat"><i class="fa fa-video-camera" aria-hidden="true"></i></button>
+                    <button class="btn" type="button" data-action="toTab,lab"><i class="fa fa-flask" aria-hidden="true"></i></button>
                 </div>
                 <button class="btn btn-dark" data-action="playerList">
                     <i class="fa fa-user" aria-hidden="true"></i>
@@ -473,6 +479,47 @@
                         </tr>
                         </tbody> -->
                     </table>
+                </div>
+                <div id='content_lab' class='_content hide p-5' style=" overflow-x: hidden;">
+                    <div class="row w-full mt-10">
+                        <div class="col-1"></div>
+                        <div class="range-slider col-9">
+                          <input class="range-slider__range" type="range" value="0" min="0" max="35" onchange="changePath(this)" oninput="changePath_before(this)">
+                          <span class="range-slider__value">1</span>
+                        </div>
+
+                        <div class="dropdown dropleft with-arrow col">
+                          <button class="btn" data-toggle="dropdown" type="button" id="..." aria-haspopup="true" aria-expanded="false">
+                            <i class="fa fa-angle-left mr-5" aria-hidden="true"></i>
+                          </button>
+                          <div class="dropdown-menu" aria-labelledby="...">
+                            <div class="dropdown-content p-10">
+                                <div class="row w-full mt-10">
+                                    <div class="form-group  w-full">
+                                        <label>モデル</label>
+                                        <select class="form-control col-12" id="select-slug" onchange="selectSlug(this)" >
+                                            <option value="normal" selected>normal</option>
+                                            <option value="nude">nude</option>
+                                            <option value="muscle">muscle</option>
+                                            <option value="smooth">smooth</option>
+                                            <option value="loomis">loomis</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                          </div>
+                        </div>
+                    </div>
+
+                    <div class="row w-full mt-10" id='pose_list'>
+                        <!-- <h4 class="text-center display-block">Loading...</h4> -->
+                        <!-- <div class="col-6" data-action="selectImg">
+                            <img src="https://love.figurosity.com/muses/10/42/c9/1042c9a5-a8fc-4c74-9bdd-97d4dacdcb2b/normal/512/pose-00.jpg">
+                        </div> -->
+                    </div>
+                    <nav aria-label="Page navigation" class="text-center mt-10">
+
+                    </nav>
                 </div>
                 <div id='content_video' class='_content hide'>
                     <div class="row">
@@ -566,6 +613,21 @@
                 </div>
                 <div id="bottom_video" class="row toolbar hide" style="width: 100%;">
                 </div>
+                <div id="bottom_lab" class="row toolbar hide" style="width: 100%;">
+                    <div class="row w-full text-center">
+                        <button class="btn col-2" data-action="pose_selectd">0</button>
+                        <button class="btn col-2" data-action="pose_selectAll">
+                            <i class="fa fa-check-square-o" aria-hidden="true"></i>
+                        </button>
+                        <button class="btn col-2 btn-primary" data-action="pose_send">
+                            <i class="fa fa-paper-plane" aria-hidden="true"></i>
+                        </button>
+                        <div class="col-2"></div>
+                        <button class="btn col-2 btn-primary" data-action="pose_search">
+                            <i class="fa fa-search" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
                 <div id="bottom_music" class="row toolbar hide" style="width: 100%;">
                     <div class="row" style="width: 100%">
                         <div class="col-3">
@@ -613,6 +675,7 @@
     <script src="js/md5.js"></script>
     <script src="js/lrz.bundle.js"></script>
     <script src="js/index.js"></script>
+    <script src="js/pose.js"></script>
     <script type="text/javascript">
     function toastAlert() {
         var alertContent = "This is a default alert with <a href='#' class='alert-link'>a link</a> being toasted.";

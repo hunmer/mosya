@@ -1,6 +1,6 @@
 var g_poseCache = {};
 var g_pose_selected = {};
-toPage(1);
+// toPage(1);
 
 function checkPoseSelected(selector = '#content_lab [data-action="selectImg"]', b = false){
     for(var div of $(selector)){
@@ -95,7 +95,6 @@ function initPoseContent(datas, b, nav = ''){
 }
 function parsePoseData(datas, time, selectable = true){
     g_cache.pose_index = 0;
-    console.log('parse');
     if(datas.user && datas.user == g_config.user.name){
         g_pose.datas = g_pose_selected;
         g_pose_selected = {};
@@ -166,34 +165,37 @@ function preloadImage(url){
 
 function parsePoses(datas, page) {
     page = parseInt(page);
-    var h = '<ul>';
+    var h = '';
     var i;
-    if (page > 1) {
-        i = page - 1;
-        h += `<li class="page-item">
-                  <a href="javascript: prevPage();" class="page-link">
-                    <i class="fa fa-angle-left" aria-hidden="true"></i>
-                    <span class="sr-only">Previous</span> 
-                  </a>
-                </li>`;
-        h += `<li class="page-item"><a href="javascript: toPage(` + i + `)" class="page-link">` + i + `</a></li>`;
+    if(g_cache.pose_maxPage > 0){
+        if (page > 1) {
+            i = page - 1;
+            h += `<li class="page-item">
+                      <a href="javascript: prevPage();" class="page-link">
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="sr-only">Previous</span> 
+                      </a>
+                    </li>`;
+            h += `<li class="page-item"><a href="javascript: toPage(` + i + `)" class="page-link">` + i + `</a></li>`;
+        }
+        h += `<li class="page-item active"><a href="javascript: toPage(` + page + `)" class="page-link">` + page + `</a></li>`;
+        if (page < g_cache.pose_maxPage) {
+            i = page + 1;
+            h += `<li class="page-item"><a href="javascript: toPage(` + i + `)" class="page-link">` + i + `</a></li>`;
+            h += `<li class="page-item ellipsis" data-action="selectPage"></li>`;
+            h += `<li class="page-item"><a href="javascript: toPage(` + g_cache.pose_maxPage + `)" class="page-link">` + g_cache.pose_maxPage + `</a></li>`;
+            h += `<li class="page-item">
+              <a href="javascript: nextPage();" class="page-link">
+                <i class="fa fa-angle-right aria-hidden="true"></i>
+                <span class="sr-only">Next</span>
+              </a>
+            </li>`;
+        }else{
+            h += `<li class="page-item ellipsis" data-action="selectPage"></li>`;
+        }
     }
-    h += `<li class="page-item active"><a href="javascript: toPage(` + page + `)" class="page-link">` + page + `</a></li>`;
-    if (page < g_cache.pose_maxPage) {
-        i = page + 1;
-        h += `<li class="page-item"><a href="javascript: toPage(` + i + `)" class="page-link">` + i + `</a></li>`;
-        h += `<li class="page-item ellipsis" data-action="selectPage"></li>`;
-        h += `<li class="page-item"><a href="javascript: toPage(` + g_cache.pose_maxPage + `)" class="page-link">` + g_cache.pose_maxPage + `</a></li>`;
-        h += `<li class="page-item">
-          <a href="javascript: nextPage();" class="page-link">
-            <i class="fa fa-angle-right aria-hidden="true"></i>
-            <span class="sr-only">Next</span>
-          </a>
-        </li>`;
-    }else{
-        h += `<li class="page-item ellipsis" data-action="selectPage"></li>`;
-    }
-    initPoseContent(datas, true, h+'</ul>')
+    if(h) h = '<ul>' + h + '</ul>';
+    initPoseContent(datas, true, h);
 }
 
 function queryPoselist(page = 1) {
@@ -203,11 +205,21 @@ function queryPoselist(page = 1) {
     }
     // $('#content_lab nav').html('');
     $('#pose_list').html('<h4 class="text-center mx-auto">読み込み中..</h4>');
-    $.getJSON(g_api + 'pose.php?data={"page": ' + page + '}&type=pose-search', function(json, textStatus) {
+
+    var params = {
+        page: page
+    }
+    if(g_config.poseSearch == 'quick-pose'){
+        var cnt = parseInt(prompt('count', 20));
+        if(cnt <= 0) return;
+        params = Object.assign(params, {"museCount":"single","count":cnt,"cameras":[1,2,3],"states":["normal","nude","muscle","smooth"],"gender":[110,111]})
+    }
+    $.getJSON(g_api + 'pose.php?data='+JSON.stringify(params)+'&type='+(g_config.poseSearch || 'pose-search'), function(json, textStatus) {
         if (textStatus == 'success') {
-            g_cache.pose_maxPage = json.poses.meta.last_page;
+            datas = json.poses ? json.poses : json;
+            g_cache.pose_maxPage = datas.meta ? datas.meta.last_page : 0;
             var poses = [];
-            for (var pose of json.poses.data) {
+            for (var pose of datas.data) {
                 var arr = [];
                 for (var state of pose.states) {
                     arr.push(state.type);
@@ -234,6 +246,15 @@ function selectSlug(dom){
     }
     local_saveJson('config', g_config);
     loadImage(getImageUrl(g_cache.poseing.uuid, dom.value, g_cache.poseing.offset, 512));
+}
+
+function selectPoseSearch(dom){
+    g_config.poseSearch = dom.value;
+    local_saveJson('config', g_config);
+    if(!g_cache.poseing){
+        g_poseCache = {};
+        toPage(1);
+    }
 }
 
 

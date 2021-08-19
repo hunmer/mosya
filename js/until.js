@@ -32,12 +32,16 @@ var g_stricker_options = local_readJson('stricker_options', {
     }
 });
 var g_playlist = local_readJson('playlist', {});
-var g_pose = local_readJson('pose', {
+// var g_pose = local_readJson('pose', {
+//     datas: {},
+//     index: 0,
+//     time: 0
+// });
+var g_pose = {
     datas: {},
     index: 0,
     time: 0
-});
-
+}
 
 function local_saveJson(key, data) {
     if (window.localStorage) {

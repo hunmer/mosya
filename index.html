@@ -480,7 +480,7 @@
                         </tbody> -->
                     </table>
                 </div>
-                <div id='content_lab' class='_content hide p-5' style=" overflow-x: hidden;">
+                <div id='content_lab' class='_content hide p-5' style="overflow-x: hidden;min-height: 300px;">
                     <div class="row w-full mt-10">
                         <div class="col-1"></div>
                         <div class="range-slider col-9">
@@ -495,14 +495,26 @@
                           <div class="dropdown-menu" aria-labelledby="...">
                             <div class="dropdown-content p-10">
                                 <div class="row w-full mt-10">
-                                    <div class="form-group  w-full">
+                                    <div class="form-group w-full">
                                         <label>モデル</label>
                                         <select class="form-control col-12" id="select-slug" onchange="selectSlug(this)" >
-                                            <option value="normal" selected>normal</option>
-                                            <option value="nude">nude</option>
-                                            <option value="muscle">muscle</option>
-                                            <option value="smooth">smooth</option>
-                                            <option value="loomis">loomis</option>
+                                            <option value="normal" selected>通常</option>
+                                            <option value="nude">裸</option>
+                                            <option value="muscle">筋肉</option>
+                                            <option value="smooth">プラスチック</option>
+                                            <option value="loomis">棒人間</option>
+                                        </select>
+                                    </div>
+                                     <div class="form-group w-full">
+                                        <label>カテゴリー</label>
+                                        <select class="form-control col-12" id="select-poseSearch" onchange="selectPoseSearch(this)" >
+                                            <option value="pose-search" selected>通常</option>
+                                            <option value="quick-pose">ランダム</option>
+                                            <option value="dogs">犬</option>
+                                            <option value="girls-with-guns-poses">銃を持った女の子</option>
+                                            <option value="superhero-poses">スーパーヒーロー</option>
+                                            <option value="martial-arts-poses">武道</option>
+                                            <option value="horses">馬</option>
                                         </select>
                                     </div>
                                 </div>
@@ -622,6 +634,7 @@
                         <button class="btn col-2 btn-primary" data-action="pose_send">
                             <i class="fa fa-paper-plane" aria-hidden="true"></i>
                         </button>
+                        <div class="col-2"></div>
                         <div class="col-2"></div>
                         <button class="btn col-2 btn-primary" data-action="pose_search">
                             <i class="fa fa-search" aria-hidden="true"></i>

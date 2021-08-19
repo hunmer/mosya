@@ -506,6 +506,11 @@ function doAction(dom, action, params) {
     switch (action[0]) {
         case 'pose_search':
             if($('#content_lab').attr('data-list') == 'true'){
+                if(g_config.poseSearch == 'quick-pose'){
+                    g_poseCache = {};
+                    toPage(1);
+                    return;
+                }
                 initPoseContent(g_pose.datas, false);
             }else{
                 toPage(1);
@@ -1738,6 +1743,7 @@ function reviceMsg(data) {
             broadcastMessage('<b>時間切りです！</b>', 'bg-secondary');
             if(g_cache.post) g_cache.post.time = 0;
             if(g_cache.poseTime) g_cache.poseTime = 0;
+            g_cache.poseing = undefined;
             $('#ftb').hide();
             break;
         case 'list':
@@ -2169,6 +2175,9 @@ function setBg(bg){
 }
 
 function test() {
+    if(g_config.poseSearch){
+        $('#select-poseSearch option[value="'+g_config.poseSearch+'"]').prop('selected', true)
+    }
     if(g_config.poseSlug){
         $('#select-slug option[value="'+g_config.poseSlug+'"]').prop('selected', true)
     }

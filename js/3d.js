@@ -7,12 +7,7 @@ var g_3d = {
 			<div class="row mt-10 subContent " id='subContent_3d'>
 					<div id="3d" class="w-full"></div>
 			</div>`).appendTo('#subContent_lab');
-
-		g_note_bottom = $(`
-				<div id="bottom_3d" class="row toolbar hide" style="width: 100%;">`+(1 || g_config.user.name == 'maki' ? `
-						<div class="row w-full">
-							<i data-action="3d_new" class="fa fa-plus col-1" aria-hidden="true"></i>
-							<div class="dropdown dropup"  style="transform: translate(-150%,0);">
+	/*	<div class="dropdown dropup"  style="transform: translate(-150%,0);">
 	                <i data-toggle="dropdown" class="fa fa-list col-1" aria-hidden="true"></i>
 	              <div class="dropdown-menu dropdown-menu-up">
 	                 <div class="dropdown-content p-10">
@@ -30,7 +25,11 @@ var g_3d = {
                       </div>
                   </div>
 	              </div>
-	            </div>
+	            </div>*/
+		g_note_bottom = $(`
+				<div id="bottom_3d" class="row toolbar hide" style="width: 100%;">`+(1 || g_config.user.name == 'maki' ? `
+						<div class="row w-full">
+							<i data-action="3d_new" class="fa fa-plus col-1" aria-hidden="true"></i>
 						</div>
 					` : '')+`</div>
 			`).prependTo('.navbar-fixed-bottom .container-fluid');

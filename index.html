@@ -483,45 +483,52 @@
                     </table>
                 </div>
                 <div id='content_lab' class='_content hide p-5' style="overflow-x: hidden;min-height: 300px;">
-                    <div class="row w-full mt-10">
-                        <div class="col-1"></div>
-                        <div class="range-slider col-9">
-                          <input class="range-slider__range" type="range" value="0" min="0" max="35" onchange="changePath(this)" oninput="changePath_before(this)">
-                          <span class="range-slider__value">1</span>
+                    <div class="btn-toolbar p-5 rounded" role="toolbar" id='tabs'>
+                        <div class="btn-group mx-auto" role="group">
+                            <button class="btn btn-primary" data-btn="btn_pose" type="button" data-action="tosubTab,lab,pose"><i class="fa fa-user" aria-hidden="true"></i></button>
                         </div>
+                    </div>
+                    <div id='subContent_lab' style="width: 100%;">
+                        <div class="row w-full mt-10 subContent" style="display: none;" id='subContent_pose'>
+                            <div class="col-1"></div>
+                            <div class="range-slider col-9">
+                              <input class="range-slider__range" type="range" value="0" min="0" max="35" onchange="changePath(this)" oninput="changePath_before(this)">
+                              <span class="range-slider__value">1</span>
+                            </div>
 
-                        <div class="dropdown dropleft with-arrow col">
-                          <button class="btn" data-toggle="dropdown" type="button" id="..." aria-haspopup="true" aria-expanded="false">
-                            <i class="fa fa-angle-left mr-5" aria-hidden="true"></i>
-                          </button>
-                          <div class="dropdown-menu" aria-labelledby="...">
-                            <div class="dropdown-content p-10">
-                                <div class="row w-full mt-10">
-                                    <div class="form-group w-full">
-                                        <label>モデル</label>
-                                        <select class="form-control col-12" id="select-slug" onchange="selectSlug(this)" >
-                                            <option value="normal" selected>通常</option>
-                                            <option value="nude">裸</option>
-                                            <option value="muscle">筋肉</option>
-                                            <option value="smooth">プラスチック</option>
-                                            <option value="loomis">棒人間</option>
-                                        </select>
-                                    </div>
-                                     <div class="form-group w-full">
-                                        <label>カテゴリー</label>
-                                        <select class="form-control col-12" id="select-poseSearch" onchange="selectPoseSearch(this)" >
-                                            <option value="pose-search" selected>通常</option>
-                                            <option value="quick-pose">ランダム</option>
-                                            <option value="dogs">犬</option>
-                                            <option value="girls-with-guns-poses">銃を持った女の子</option>
-                                            <option value="superhero-poses">スーパーヒーロー</option>
-                                            <option value="martial-arts-poses">武道</option>
-                                            <option value="horses">馬</option>
-                                        </select>
+                            <div class="dropdown dropleft with-arrow col">
+                              <button class="btn" data-toggle="dropdown" type="button" id="..." aria-haspopup="true" aria-expanded="false">
+                                <i class="fa fa-angle-left mr-5" aria-hidden="true"></i>
+                              </button>
+                              <div class="dropdown-menu" aria-labelledby="...">
+                                <div class="dropdown-content p-10">
+                                    <div class="row w-full mt-10">
+                                        <div class="form-group w-full">
+                                            <label>モデル</label>
+                                            <select class="form-control col-12" id="select-slug" onchange="selectSlug(this)" >
+                                                <option value="normal" selected>通常</option>
+                                                <option value="nude">裸</option>
+                                                <option value="muscle">筋肉</option>
+                                                <option value="smooth">プラスチック</option>
+                                                <option value="loomis">棒人間</option>
+                                            </select>
+                                        </div>
+                                         <div class="form-group w-full">
+                                            <label>カテゴリー</label>
+                                            <select class="form-control col-12" id="select-poseSearch" onchange="selectPoseSearch(this)" >
+                                                <option value="pose-search" selected>通常</option>
+                                                <option value="quick-pose">ランダム</option>
+                                                <option value="dogs">犬</option>
+                                                <option value="girls-with-guns-poses">銃を持った女の子</option>
+                                                <option value="superhero-poses">スーパーヒーロー</option>
+                                                <option value="martial-arts-poses">武道</option>
+                                                <option value="horses">馬</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
+                              </div>
                             </div>
-                          </div>
                         </div>
                     </div>
 
@@ -705,6 +712,7 @@
     <script src="js/pose.js"></script>
     <script src="js/note.js"></script>
     <script src="js/tip.js"></script>
+    <script src="js/3d.js"></script>
     <script type="text/javascript">
     function toastAlert() {
         var alertContent = "This is a default alert with <a href='#' class='alert-link'>a link</a> being toasted.";

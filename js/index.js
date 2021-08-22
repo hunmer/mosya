@@ -10,10 +10,10 @@ var g_imageHost = 'https://mosya-server.glitch.me/';
 var g_api = 'https://neysummer-api.glitch.me/';
 var g_test = 1;
 
-// var socket_url = 'ws://127.0.0.1:8000';
-// // var socket_url = 'ws://192.168.31.206:8000';
-// var g_api = 'api/';
-// var g_imageHost = 'http://127.0.0.1/mosya-websocket/';
+var socket_url = 'ws://127.0.0.1:8000';
+var socket_url = 'ws://192.168.31.209:8000';
+var g_api = 'api/';
+var g_imageHost = 'http://127.0.0.1/mosya-websocket/';
 
 var g_cache = {
     logined: false,
@@ -300,10 +300,11 @@ function init() {
             halfmoon.toggleSidebar();
         }else
         if(g_cache.tab != undefined){
+            g_cache.tab = undefined;
             $('[data-action="toTab,chat"]')[0].click();
         }else{
-            console.log(event);
             if(confirm('終了しますか？オンライン時間 :' + getTime(getNow() -  g_cache.loginTime) )){
+                toastPAlert('よろしいですか？!', 1000, '', 'alert-danger');
                 return;
             }
         }
@@ -1395,14 +1396,22 @@ function doAction(dom, action, params) {
             var par = $('#subContent_' + action[1]).show();
 
             par.find('[data-btn].btn-primary').removeClass('btn-primary');
-            var btn = $('[data-btn=btn_"' + action[2] + '"]').addClass('btn-primary');
+            var btn = $('[data-btn="btn_' + action[2] + '"]').addClass('btn-primary');
+            
             var unread = btn.find('[data-clickHide]');
-            console.log(par, btn, unread);
             if (unread.length > 0) {
                 unread.html('').hide();
             }
             for (var con of par.find('.subContent')) {
-                if (con.id == action[2]) {
+                if (con.id == 'subContent_'+action[2]) {
+                    $(con).show();
+                } else {
+                    $(con).hide();
+                }
+            }
+            var toolbar = action.length > 3 ? action[3] : action[2];
+            for (var con of $('.toolbar')) {
+                if (con.id == 'bottom_' + toolbar && $(con).html() != '') {
                     $(con).show();
                 } else {
                     $(con).hide();
@@ -2307,7 +2316,7 @@ function test() {
     //     $(_video).show();
     // }
     $('#switch-grid').prop('checked',g_config.grid.enable);
-                setTimeout(() => {drawBoard()}, 3000);
+    setTimeout(() => {drawBoard()}, 3000);
 
     // halfmoon.toastAlert('precompiled-alert-1', 17500);
     // halfmoon.toggleModal('modal-custom');

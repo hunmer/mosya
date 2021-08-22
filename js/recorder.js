@@ -26,7 +26,6 @@ function startRecord() {
     $('#record_progress').css('width', '0%');
     g_click.startRecord = getNow(false);
     mediaRecorder.start();
-    console.log("录音中...");
     soundTip('./res/di.mp3');
 
     g_click.recordTimer = setInterval(() => {
@@ -40,7 +39,6 @@ function stopRecord(play = true) {
     if (mediaRecorder.state == "recording") {
         clearInterval(g_click.recordTimer);
         $('[data-action="record"]').removeClass('text-primary');
-        console.log("录音结束");
         g_click.endRecord = getNow(false);
         g_click.play = play;
         mediaRecorder.stop();
@@ -59,6 +57,7 @@ if (navigator.mediaDevices.getUserMedia) {
     const constraints = { audio: true };
     navigator.mediaDevices.getUserMedia(constraints).then(
         stream => {
+            /*if(IsPC()) */$('[data-action="show_recorder"]').show();
             mediaRecorder = new MediaRecorder(stream);
             mediaRecorder.ondataavailable = e => {
                 chunks.push(e.data);

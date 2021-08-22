@@ -33,7 +33,6 @@
     div.grid .photo {
         border-radius: 20px;
         margin: 0 auto;
-        transition: .8s opacity;
     }
 
     .selected {
@@ -68,9 +67,6 @@
         background-color: rgba(144, 147, 153, .3);
     }
 
-
-
-    /* clear fix */
     .grid:after {
         content: '';
         display: block;
@@ -96,14 +92,6 @@
     .grid-item img {
         display: block;
         max-width: 100%;
-    }
-
-    div.grid:hover .photo {
-        opacity: 0.3;
-    }
-
-    div.grid:hover .photo:hover {
-        opacity: 1;
     }
 
     .icon {
@@ -208,6 +196,38 @@
     <script src="js/picker.date.js"></script>
     <script src="js/ja_JP.js"></script>
     <script type="text/javascript">
+    var g_localKey = 'mosya_';
+    var g_data = local_readJson('data', {
+        md5: undefined,
+        datas: {}
+    });
+
+    function local_saveJson(key, data) {
+        if (window.localStorage) {
+            key = g_localKey + key;
+            data = JSON.stringify(data);
+            if (data == undefined) data = '[]';
+            return localStorage.setItem(key, data);
+        }
+        return false;
+    }
+
+    function local_readJson(key, defaul = {}, check = false) {
+        if (!window.localStorage) return defaul;
+        key = g_localKey + key;
+        var r = JSON.parse(localStorage.getItem(key));
+        if (r === null) return defaul;
+        if (check) {
+            for (var k in defaul) {
+                if (r[k] == undefined) {
+                    r[k] = defaul[k];
+                }
+            }
+        }
+        return r;
+    }
+
+
     var g_imageHost = 'https://mosya-server.glitch.me/';
     var socket_url = 'wss:///mosya-server.glitch.me';
 
@@ -219,6 +239,9 @@
         logined: false,
     }
     $(function() {
+        if (g_data.data) {
+            parseData(g_data.data);
+        }
         initWebsock();
         $(document).on('click', '[data-action]', function(event) {
             doAction(this, $(this).attr('data-action'));
@@ -241,7 +264,7 @@
 
     function getTime1(s) {
         s = Number(s);
-        if(s >= 86400){
+        if (s >= 86400) {
             return parseInt(s / 86400) + '天';
         }
         var h = 0,
@@ -294,14 +317,14 @@
             if (enable[day] == undefined) {
                 enable[day] = day.split('/');
             }
-            var desc = '['+getTime(date) + '] By ' + json[md5].user;
-            if(json[md5].spend != undefined){
-                desc += `(`+getTime1(json[md5].spend)+')';
+            var desc = '[' + getTime(date) + '] By ' + json[md5].user;
+            if (json[md5].spend != undefined) {
+                desc += `(` + getTime1(json[md5].spend) + ')';
             }
             h += `
                      <div class="grid-item" data-time="` + json[md5].time + `">
                         <img class="icon" src="res/` + json[md5].user + `.jpg">
-                        <img class="photo" data-src="` + g_imageHost + `saves/` + md5 + `.jpg" src="` + g_imageHost + `saves/_` + md5 + `.jpg" alt="` + desc + `" title="`+desc+`">
+                        <img class="photo" data-src="` + g_imageHost + `saves/` + md5 + `.jpg" src="` + g_imageHost + `saves/_` + md5 + `.jpg" alt="` + desc + `" title="` + desc + `">
                     </div>`;
             i++;
         }
@@ -324,7 +347,7 @@
             title: (image, imageData) => `${image.alt} (${imageData.naturalWidth} × ${imageData.naturalHeight})`,
             url(image) {
                 return image.src.replace('/_', '/');
-              },
+            },
         });
 
         var $grid = $('.grid').isotope({
@@ -335,14 +358,13 @@
             }
         });
         $grid.imagesLoaded().progress(function(instance, image) {
-            if(image.img.classList.contains('photo')){
+            if (image.img.classList.contains('photo')) {
                 $grid.isotope('layout');
             }
         });
     }
 
     function setDataFilter(start, end) {
-        console.log(start, end);
         var i = 0;
         $('.grid').isotope({
             filter: function() {
@@ -362,8 +384,7 @@
         if (connection != undefined) connection.close();
         connection = new WebSocket(socket_url);
         connection.onopen = () => {
-            g_cache.logined = true;
-            queryMsg({ type: 'pics' });
+            queryMsg({ type: 'pics', md5: g_data.md5 });
         }
 
         connection.onclose = () => {}
@@ -372,7 +393,11 @@
             var data = JSON.parse(e.data);
             if (data.type == 'pics') {
                 connection.close();
-                parseData(data.data);
+                if (data.data) {
+                    g_data = data;
+                    local_saveJson('data', g_data);
+                    parseData(data.data);
+                }
             }
         }
     }

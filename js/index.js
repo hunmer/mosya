@@ -8,7 +8,7 @@ var g_json;
 var socket_url = 'wss:///mosya-server.glitch.me';
 var g_imageHost = 'https://mosya-server.glitch.me/';
 var g_api = 'https://neysummer-api.glitch.me/';
-var g_test = false;
+var g_test = 1;
 
 // var socket_url = 'ws://127.0.0.1:8000';
 // // var socket_url = 'ws://192.168.31.206:8000';
@@ -60,6 +60,20 @@ function init() {
     $('body').show();
 
     initWebsock();
+     _video.onplay = () => {
+        if(_video.volume > 0){
+            if(!_audio.paused){
+                _audio.temp_paused = true;
+                _audio.pause();
+            }
+        }
+     },
+      _video.onpause = () => {
+        if(_audio.temp_paused){
+            _audio.temp_paused = false;
+            _audio.play();
+        }
+     },
     _audio_stricker.onplay = () => {
         if (_audio_stricker.icon) {
             $(_audio_stricker.icon).prop('class', 'fa fa-pause')
@@ -112,6 +126,7 @@ function init() {
     _tts.parse = (data) => {
 
         if(data.meta){
+            var timeout = 0;
             switch(data.meta.type){
                 case 'time':
                     addAnimation($('#cnt'), 'flash');
@@ -120,10 +135,20 @@ function init() {
                 case 'chat':
                     if(data.meta.user && data.meta.user == me()) return;
                     break;
+
+                case 'broadcast':
+                    break;
+
+                case 'tip':
+                    timeout = 3000;
+                    g_tip.alert(data.meta.value, data.meta.time);
+                    break;
             }
         }
-        _tts.src = data.data;
-        _tts.play();
+        setTimeout(() => {
+            _tts.src = data.data;
+            _tts.play();
+        }, timeout);
     }
 
     _tts.onplay = () => {
@@ -243,7 +268,7 @@ function init() {
                         break;
 
                     case 'img_sendImage':
-                        var s = '<img class="thumb" data-spend="'+parseInt(g_cache.post_start)+'" data-user="'+g_config.user.name+'" data-action="previewImage" src="' + rst.base64 + '" alt="Upload by ' + g_config.user.name + '">';
+                        var s = '<img class="thumb" data-user="'+g_config.user.name+'" data-action="previewImage" src="' + rst.base64 + '" alt="Upload by ' + g_config.user.name + '">';
                         console.log(s);
                         var m = md5(s);
                         g_cache.sendedImgMd5 = m;
@@ -277,7 +302,10 @@ function init() {
         if(g_cache.tab != undefined){
             $('[data-action="toTab,chat"]')[0].click();
         }else{
-            return;
+            console.log(event);
+            if(confirm('終了しますか？オンライン時間 :' + getTime(getNow() -  g_cache.loginTime) )){
+                return;
+            }
         }
         window.history.pushState(null, null, "#");
         event.preventDefault(true);
@@ -293,6 +321,8 @@ function init() {
     $(window).resize((e) => {
         drawBoard();
     });
+    g_cache.loginTime = getNow(); 
+
     test();
 }
 
@@ -428,16 +458,19 @@ function checkStrickerMeta(id, sid, img) {
         sid: sid,
         img: $(img).attr('data-src'),
     };
-    if (g_stricker['id_' + id]['hasAnimation']) {
-        pic = 'http://dl.stickershop.line.naver.jp/products/0/0/1/' + id + '/android/animation/' + sid + '.png';
-        data.animation = pic;
-        reloadImage($(img).attr('data-src', pic)[0]);
+    if(g_stricker['id_' + id]){
+         if (g_stricker['id_' + id]['hasAnimation']) {
+            pic = 'http://dl.stickershop.line.naver.jp/products/0/0/1/' + id + '/android/animation/' + sid + '.png';
+            data.animation = pic;
+            reloadImage($(img).attr('data-src', pic)[0]);
+        }
+        if (g_stricker['id_' + id]['hasSound']) {
+            data.audio = 'http://dl.stickershop.line.naver.jp/products/0/0/1/' + id + '/android/sound/' + sid + '.m4a';
+            _audio_stricker.src = data.audio;
+            _audio_stricker.img = pic || $(img).attr('data-src');
+        }
     }
-    if (g_stricker['id_' + id]['hasSound']) {
-        data.audio = 'http://dl.stickershop.line.naver.jp/products/0/0/1/' + id + '/android/sound/' + sid + '.m4a';
-        _audio_stricker.src = data.audio;
-        _audio_stricker.img = pic || $(img).attr('data-src');
-    }
+   
     g_cache.strick_last = data;
 }
 
@@ -445,6 +478,7 @@ function sendStricker() {
     var animation = g_cache.strick_last.animation;
     var key = g_cache.strick_last.id+','+g_cache.strick_last.sid;
 
+    // 保存历史记录
     var i = g_stricker_options.history.indexOf(key);
     if(i != -1) g_stricker_options.history.splice(i, 1);
     g_stricker_options.history.splice(0, 0, key);
@@ -455,9 +489,18 @@ function sendStricker() {
     stricker_initHistory();
 
     // TODO 默认预载图片
+    var s = $('#msg').val();
     var data = { type: 'msg', msg: '<img class="thumb loading animated bounceInDown' + (animation ? ' gif' : '') + '" animated="bounceInDown" data-action="previewImage" data-src="' + (animation || g_cache.strick_last.img) + '">' };
     if (g_cache.strick_last.audio) {
         data.audio = g_cache.strick_last.audio;
+    }else
+    if(s != ''){
+        if(s.substr(0, 1) == '.' || s.substr(0, 4) == 'http'){ // url
+            data.audio = s;
+        }else{
+            data.tts = s;
+        }
+         $('#msg').val('');
     }
     $('#bottom_stricker').hide();
     queryMsg(data, true);
@@ -489,21 +532,59 @@ function reloadImage(img) {
 }
 
 function queryPlaylist(id){
+    var share = confirm('共有しますか？');
+    var random = confirm('ランタイムしますか?');
     $.getJSON(g_api + 'search.php?server=youtube&type=list&id=' + id, function(json, textStatus) {
         if (textStatus == 'success') {
+            console.log(json);
             g_playlist[id] = {
-                name: getFormatedTime(1),
+                name: json[0].name+'...',
+                // name: getFormatedTime(1),
                 length: json.length
             }
             local_saveJson('playlist', g_playlist);
-            queryMsg({ type: 'playlist_set', user: g_config.user.name, data: json });
+            if(random){
+                json = json.sort(function(a, b) {
+                    return Math.random()>0.5?-1:1;
+                });
+            }
+            var d = { type: 'playlist_set', user: g_config.user.name, data: json };
+            if(share){
+                queryMsg(d);
+            }else{
+                reviceMsg(d);
+            }
         }
     });
+}
+var g_actions = {};
+
+function registerAction(name, callback){
+    g_actions[name] = callback;
 }
 
 function doAction(dom, action, params) {
     var action = action.split(',');
+    if(g_actions[action[0]]){
+        g_actions[action[0]](dom, action, params);
+    }
     switch (action[0]) {
+        case 'qm':
+            halfmoon.deactivateAllDropdownToggles();
+            sendMsg($(dom).html());
+            break;
+        case 'audio_sort':
+            if($(dom).hasClass('fa-level-down')){
+                c = 'random';
+            }else
+            if($(dom).hasClass('fa-random')){
+                c = 'repeat';
+            }else
+            if($(dom).hasClass('fa-repeat')){
+                c = 'level-down'
+            }
+            $(dom).attr('class', 'fa fa-'+c);
+            break;
         case 'pose_search':
             if($('#content_lab').attr('data-list') == 'true'){
                 if(g_config.poseSearch == 'quick-pose'){
@@ -531,7 +612,7 @@ function doAction(dom, action, params) {
         case 'pose_send':
             if(checkPoseSelected() > 0){
                 var time = parseInt(prompt('interval time', 180));
-                if(time > 0){
+                if(!isNaN(time) && time > 0){
                     queryMsg({ type: 'pose_list', data: g_pose_selected, time: time}, true);
                 }
             }else{
@@ -672,9 +753,9 @@ function doAction(dom, action, params) {
             $('#modal-custom').find('.modal-title').html('リスト');
             $('#modal-custom').attr('data-type', 'playlist').find('.modal-html').html(h+`</table>
                 <div id="playlist_btns" class="hide mt-10">
-                <a data-action="playlist_btn_delete" href="#" class="btn bg-danger" role="button"><i class="fa fa-trash-o" aria-hidden="true"></i></a>
-                <a data-action="playlist_btn_edit" href="#" class="btn bg-default" role="button"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
-                <a data-action="playlist_btn_send" href="#" class="btn btn-primary" role="button"><i class="fa fa-paper-plane" aria-hidden="true"></i></a>
+                <a data-action="playlist_btn_delete" class="btn bg-danger" role="button"><i class="fa fa-trash-o" aria-hidden="true"></i></a>
+                <a data-action="playlist_btn_edit" class="btn bg-default" role="button"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
+                <a data-action="playlist_btn_send"  class="btn btn-primary" role="button"><i class="fa fa-paper-plane" aria-hidden="true"></i></a>
                 </div>
             `);
             halfmoon.toggleModal('modal-custom');
@@ -824,7 +905,7 @@ function doAction(dom, action, params) {
         case 'downloadImageToServer':
             var src = $('#modal-img img').attr('src');
             if (src.indexOf('http:') == -1) {
-                queryMsg({ type: 'save', data: src, spend: $('#modal-img').attr('data-spend'), user: $('#modal-img').attr('data-user')});
+                queryMsg({ type: 'save', data: src, user: $('#modal-img').attr('data-user')});
             }
             break;
         case 'stricker_delete':
@@ -1104,10 +1185,20 @@ function doAction(dom, action, params) {
             if (prev.length) prev.click();
             break;
         case 'audio_next':
-            var next = $('[data-vid].bg-primary').next();
-            if (next.length) {
-                next.click();
+            var b = $('[data-action="audio_sort"]');
+            if(b.hasClass('fa-repeat')){
+                _audio.currentTime = 0;
+                _audio.play();
+                return;
             }
+            if(b.hasClass('fa-level-down')){
+                var c = $('[data-vid].bg-primary').next();
+            }else
+            if(b.hasClass('fa-random')){
+                c = $('[data-vid]');
+                c = $(c[randNum(0, c.length-1)]);
+            }
+            if (c.length) c.click();
             break;
         case 'playSong':
             var src = g_api + 'search.php?server=youtube&type=url&id=' + $(dom).attr('data-vid');
@@ -1211,7 +1302,7 @@ function doAction(dom, action, params) {
             $('#msg').val('');
             $('#bottom_stricker').hide();
             addAnimation($(dom), 'rubberBand');
-            queryMsg({ type: 'msg', user: g_config.user.name, msg: msg, textOnly: true });
+            sendMsg(msg);
             break;
         case 'playerList':
             updatePlaylist();
@@ -1247,8 +1338,7 @@ function doAction(dom, action, params) {
 
             $('#modal-img .modal-title').html(dom.alt);
 
-             $('#modal-img').attr('data-spend', $(dom).attr('data-spend')).
-             attr('data-user', $(dom).attr('data-user')).
+             $('#modal-img').attr('data-user', $(dom).attr('data-user')).
              find('img').attr('src', '').attr('src', dom.src);
 
             halfmoon.toggleModal('modal-img');
@@ -1278,7 +1368,7 @@ function doAction(dom, action, params) {
             }
             var toolbar = action.length > 2 ? action[2] : action[1];
             for (var con of $('.toolbar')) {
-                if (con.id == 'bottom_' + toolbar) {
+                if (con.id == 'bottom_' + toolbar && $(con).html() != '') {
                     $(con).show();
                 } else {
                     $(con).hide();
@@ -1381,6 +1471,7 @@ function updatePlaylist() {
     <table class="table table-striped">
     <thead>
         <tr>
+            <th></th>
             <th><i class="fa fa-user" aria-hidden="true"></th>
             <th><i class="fa fa-music" aria-hidden="true"></th>
             <th><i class="fa fa-video-camera" aria-hidden="true"></th>
@@ -1394,17 +1485,18 @@ function updatePlaylist() {
         d = g_cache.players[name];
         html += `
             <tr>
-                  <th>
+                    <th><i class="fa fa-`+(d.pc ? 'desktop' : 'mobile')+`" aria-hidden="true"></th>
+                  <td>
                       <img src="res/` + name + `.jpg" class="img-fluid rounded-circle user-icon" alt="` + name + `">
-                  </th>
+                  </td>
                   <td>` + (d.status.audio != undefined ? `
-                    <a href="#" class="badge-group" role="group" aria-label="...">
+                    <a  class="badge-group" role="group" aria-label="...">
                       <span class="badge bg-dark text-white">` + getTime(parseInt(d.status.audio.time)) + `</span> 
                       <span class="badge badge-success" data-action="play_url" data-type='audio' data-url="` + d.status.audio.url + `" data-time="` + d.status.audio.time + `"><i class="fa fa-play" aria-hidden="true"></i></span>
                     </a>
                     ` : '') + `</td>
                   <td>` + (d.status.video != undefined ? `
-                    <a href="#" class="badge-group" role="group" aria-label="...">
+                    <a  class="badge-group" role="group" aria-label="...">
                       <span class="badge bg-dark text-white">` + getTime(parseInt(d.status.video.time)) + `</span> 
                       <span class="badge badge-success" data-action="play_url" data-type='video' data-url="` + d.status.video.url + `" data-time="` + d.status.video.time + `"><i class="fa fa-play" aria-hidden="true"></i></span>
                     </a>
@@ -1463,10 +1555,10 @@ function initWebsock() {
     connection = new WebSocket(socket_url);
     connection.onopen = () => {
         $('#status').attr('class', 'bg-success');
-        queryMsg({ type: 'login', user: g_config.user });
+        queryMsg({ type: 'login', user: g_config.user , pc: IsPC()});
         if(!g_cache.logined){
             // queryMsg({ type: 'pics_datas' });
-            // queryMsg({ type: 'history_message' });
+            queryMsg({ type: 'history_message' });
         }
         g_cache.logined = true;
         socketTest();
@@ -1577,11 +1669,19 @@ function me(){
     return g_config.user.name;
 }
 
+var g_revices = {};
+
+function registerRevice(name, callback){
+    g_revices[name] = callback;
+}
 
 function reviceMsg(data) {
     console.log(data);
     var type = data.type;
     delete data.type;
+    if(g_revices[type]){
+        return g_revices[type](data);
+    }
     switch (type) {
         case 'pose_list':
             parsePoseData(data.data, data.time, false);
@@ -1655,7 +1755,7 @@ function reviceMsg(data) {
                 var detail = data.data[key];
                 h += `<div class="div-photo" data-md5="` + key + `"><h6 class="text-center">` + getFormatedTime(1, new Date(detail.time)) + ' (' + detail.user + `)</h6><img data-action="openViewer" src="` + g_imageHost + `saves/_` + key + `.jpg" class="serverImg" alt="` + detail.user + `">`;
                 if (g_config.user.name == 'maki') {
-                    h += `<a href="#" class="btn btn-square btn-danger rounded-circle" data-action="deleteServerImage" role="button"><i class="fa fa-trash-o" aria-hidden="true"></i></a> 
+                    h += `<a  class="btn btn-square btn-danger rounded-circle" data-action="deleteServerImage" role="button"><i class="fa fa-trash-o" aria-hidden="true"></i></a> 
                     `;
                 }
                 h += '</div>'
@@ -1669,7 +1769,7 @@ function reviceMsg(data) {
                 for (var day in data.data[user]) {
                     i += data.data[user][day];
                 }
-                h += `<a href="#" class="sidebar-link sidebar-link-with-icon" data-action="show_onlineTime">
+                h += `<a  class="sidebar-link sidebar-link-with-icon" data-action="show_onlineTime">
                     <span class="sidebar-icon">
                         <img id='img_user' data-action="previewImage" src="res/` + user + `.jpg" class="rounded-circle user-icon" alt="` + user + `">
                     </span>
@@ -1766,7 +1866,7 @@ function reviceMsg(data) {
         case 'save':
             var img = $('[data-md5="' + data.data + '"]');
             if (img.length && !img.parent().find('.saved').length) {
-                $(`<a href="#" class="btn btn-square btn-success rounded-circle saved" style="position: relative;bottom: 5px;right: 20px;" role="button"><i class="fa fa-check" aria-hidden="true"></i></a> 
+                $(`<a  class="btn btn-square btn-success rounded-circle saved" style="position: relative;bottom: 5px;right: 20px;" role="button"><i class="fa fa-check" aria-hidden="true"></i></a> 
                 `).insertAfter(img);
                 closeModal('modal-img', false, () => {
                     halfmoon.toggleModal('modal-img');
@@ -1775,6 +1875,10 @@ function reviceMsg(data) {
             break;
         case 'msg':
         case 'voice':
+            var d = $('#typing');
+            if(d.css('display') != 'none' && d.attr('data-user') == data.user){
+                d.hide();
+            }
             var dom = addMsg(`<tr class="msg hide">
                   <th>
                       <img src="` + getUserIcon(data.user) + `" class="rounded-circle user-icon" alt="` + data.user + `">
@@ -1815,7 +1919,7 @@ function reviceMsg(data) {
                 //}
             }
             if (data.audio) {
-                $(`<a href="#" class="btn btn-square btn-success rounded-circle" data-action="play_strickerAudio" data-audio="` + data.audio + `" style="position: relative;bottom: 5px;right: 20px;" role="button"><i class="fa fa-play" aria-hidden="true"></i></a> 
+                $(`<a  class="btn btn-square btn-success rounded-circle" data-action="play_strickerAudio" data-audio="` + data.audio + `" style="position: relative;bottom: 5px;right: 20px;" role="button"><i class="fa fa-play" aria-hidden="true"`+(data.tts ? ' alt="'+data.tts+'"' : '')+`></i></a> 
                 `).insertAfter(image);
                 $('#audio_stricker')[0].src = data.audio;
             }
@@ -1823,7 +1927,7 @@ function reviceMsg(data) {
                 if (image[0].src.indexOf('data:image/') != -1) {
                     $(image).attr('data-md5', md5(image[0].src));
                 }
-                // $(`<a href="#" class="btn btn-square btn-secondary rounded-circle" data-action="show_stricker" style="position: relative;top: 0px;left: 20px;" role="button"><i class="fa fa-smile-o font-size-20" aria-hidden="true"></i></a> 
+                // $(`<a  class="btn btn-square btn-secondary rounded-circle" data-action="show_stricker" style="position: relative;top: 0px;left: 20px;" role="button"><i class="fa fa-smile-o font-size-20" aria-hidden="true"></i></a> 
                 // `).insertBefore(image);
                 if (image.hasClass('loading')) {
                     reloadImage(image[0]);
@@ -1926,11 +2030,14 @@ function parsePost(data, save = true) {
     });
 }
 
-function loadImage(src, anime = true){
+function loadImage(src, anime = true, dsrc = ''){
     imagesLoaded($('#image').attr('src', src)).on('progress', function(instance, image) {
         if (image.isLoaded) {
             $('#div_mainImg').height($('#image').height());
             setTimeout(() => {drawBoard()}, 1500);
+        }else
+        if(dsrc){
+            loadImage(dsrc, anime);
         }
     });
     if (_viewer && _viewer.isShown) {
@@ -2118,6 +2225,8 @@ function stricker_saveTags(textarea) {
 }
 
 function checkStrickerTags(textarea) {
+    // setTyping(g_config.user.name);
+    queryMsg({type: 'typing'}, true);
     var h = '';
     var text = textarea.value;
     if (text != '') {
@@ -2210,4 +2319,8 @@ function test() {
 
 function socketTest() {
     queryMsg({ type: 'online' });
+}
+
+function sendMsg(msg){
+   queryMsg({ type: 'msg', msg: msg, textOnly: true }, true);
 }

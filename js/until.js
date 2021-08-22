@@ -171,11 +171,30 @@ function toastPAlert(msg, time, title, type) {
     d.attr('animated', x).addClass('animated ' + x).one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend',
     
     function() {
-        if ($(this).attr('animated') != undefined) {
-            $(this).removeClass('animated ' + $(this).attr('animated')).attr('animated', '');
+        if(removeAnimation(d)){ // 确保有移除过动画
             if (callback != undefined) {
                 callback();
             }
         }
+        
     })
 }
+
+function removeAnimation(d){
+    var x = d.attr('animated');
+    if (x != undefined) {
+       d.removeClass('animated ' + x).attr('animated', null);
+    }
+    return x;
+}
+
+
+function IsPC(){  
+     var userAgentInfo = navigator.userAgent;
+     var Agents = new Array("Android", "iPhone", "SymbianOS", "Windows Phone", "iPad", "iPod");  
+     var flag = true;  
+     for (var v = 0; v < Agents.length; v++) {  
+         if (userAgentInfo.indexOf(Agents[v]) > 0) { flag = false; break; }  
+     }  
+     return flag;  
+  }

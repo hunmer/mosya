@@ -48,15 +48,19 @@ function toPage(page) {
     }
 }
 
+function loadPoseImage(path, size){
+    loadImage(getImageUrl(g_cache.poseing.uuid, g_cache.poseing.slug.indexOf(g_config.poseSlug) == -1 ? 'normal' : g_config.poseSlug, path, size), false, getImageUrl(g_cache.poseing.uuid, 'normal', path, size));
+}
+
 function changePath_before(dom) {
     $(dom).next().html(dom.value);
     if(!g_cache.poseing) return;
-    loadImage(getImageUrl(g_cache.poseing.uuid, g_config.poseSlug, dom.value, 100), false);
+    loadPoseImage(dom.value, 100);
 }
 
 function changePath(dom) {
     if(!g_cache.poseing) return;
-    loadImage(getImageUrl(g_cache.poseing.uuid, g_config.poseSlug, dom.value, 512), false);
+    loadPoseImage(dom.value, 512);
     g_pose.datas[g_cache.poseing.id].offset = dom.value;
 }
 
@@ -130,9 +134,10 @@ function pose_nextImg(index){
         // randNum(0, 32)
         g_cache.poseing.offset = 0;
     }
-    loadImage(getImageUrl(g_cache.poseing.uuid, g_config.poseSlug, g_cache.poseing.offset));
+    var slug = g_cache.poseing.slug.indexOf(g_config.poseSlug) == -1 ? 'normal' : g_config.poseSlug;
+    loadPoseImage(g_cache.poseing.offset, 512);
     for(var i=0;i<data.cnt-1;i++){
-        preloadImage(getImageUrl(data.uuid, g_config.poseSlug, i, 100));
+        preloadImage(getImageUrl(data.uuid, slug, i, 100));
     }
     $('.range-slider__range').val(g_cache.poseing.offset);
     $('.range-slider__value').html(g_cache.poseing.offset);
@@ -141,7 +146,7 @@ function pose_nextImg(index){
         return g_cache.poseTime--;
     }, () => {
         if(index == keys.length - 1){
-            reviceMsg({type: 'over'});
+            //reviceMsg({type: 'over'});
         }else{
             g_cache.pose_index++;
             pose_nextImg();
@@ -221,8 +226,10 @@ function queryPoselist(page = 1) {
             var poses = [];
             for (var pose of datas.data) {
                 var arr = [];
-                for (var state of pose.states) {
-                    arr.push(state.type);
+                if(g_config.poseSearch == 'quick-pose'){
+                    arr = ["normal","nude","muscle","smooth", "loomis"];
+                }else{
+                    for (var state of pose.states) arr.push(state.type);
                 }
                 poses["_"+pose.id] = {
                     uuid: pose.uuid,
@@ -245,7 +252,7 @@ function selectSlug(dom){
         preloadImage(getImageUrl(g_cache.poseing.uuid, g_config.poseSlug, i, 100));
     }
     local_saveJson('config', g_config);
-    loadImage(getImageUrl(g_cache.poseing.uuid, dom.value, g_cache.poseing.offset, 512));
+    loadPoseImage(g_cache.poseing.offset, 512);
 }
 
 function selectPoseSearch(dom){

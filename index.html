@@ -38,6 +38,8 @@
 </head>
 
 <body class="dark-mode with-custom-webkit-scrollbars with-custom-css-scrollbars" data-dm-shortcut-enabled="true" data-sidebar-shortcut-enabled="true">
+    
+
     <div class="modal" id="modal-upload" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -188,7 +190,7 @@
         <div id='top_progress' class="progress-bar progress-bar-animated" role="progressbar" style="width: 20%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
     </div> -->
     <div id='ftb'>
-        <span id='cnt' onclick="if(_viewer.isShown) $('#ftb_icons').toggle();" class="badge badge-primary text-light">00:00</span>
+        <span id='cnt' class="badge badge-primary text-light">00:00</span>
         </br>
         <span id='cnt1' class="badge badge-primary text-light mt-10 hide">1/20</span>
     </div>
@@ -399,7 +401,7 @@
                 <button class="btn btn-dark" data-action="fullContnet">
                     <i class="fa fa-arrow-up" aria-hidden="true"></i>
                 </button>
-                <div class="btn-group mx-auto" role="group">
+                <div class="btn-group mx-auto" role="group" id='btns_tabs'>
                     <button class="btn btn-primary" type="button" data-action="toTab,chat"><i class="fa fa-comments" aria-hidden="true"></i>
                         <span class="badge badge-danger badge-pill" id='unread' style="display: none"></span>
                     </button>
@@ -412,7 +414,7 @@
                     <span class="ml-2">1</span>
                 </button>
             </div>
-            <div id="tabs_contents" style="margin-bottom: 200px">
+            <div id="tabs_contents" style="margin-bottom: 100px">
                 <div id='content_chat' class='_content'>
                     <table class="table table-striped">
                         <thead>
@@ -591,17 +593,10 @@
                 </div>
             </div>
         </div>
-        <div id='ftb_icons' style="display: none">
-            <button data-action="show_chat" class="btn btn-square bg-dark text-light" type="button">
-                <i class="fa fa-comment" aria-hidden="true"></i>
-                <span class="badge badge-danger badge-pill badge_rt" style="display: none"></span>
-            </button>
-            <button data-action="show_recorder" class="btn btn-square bg-dark text-light" type="button">
-                <i class="fa fa-microphone" aria-hidden="true"></i>
-            </button>
-            <button data-action="show_musicPlayer" class="btn btn-square bg-dark text-light" type="button">
-                <i class="fa fa-music" aria-hidden="true"></i>
-            </button>
+
+        <div id="typing" class="bg-white animated bounceInLeft" style="display: none;" animated='bounceInLeft'>
+            <b class="text-dark">入力中...</b>
+             <img src="res/maki.jpg" class="rounded-circle user-icon" alt="maki">
         </div>
         <div style="position: fixed;bottom: 8%;width: 100%;">
             <div id="bottom_stricker" class="bg-dark toolbar overflow-x-scroll overflow-y-hidden w-full h-125" style="display: none;">
@@ -611,17 +606,33 @@
         </div>
         <nav class="navbar navbar-fixed-bottom" style="height: 6%;background-color: rgba(0, 0, 0, .2);border-radius: 10px;">
             <div class="container-fluid">
-                <div id="bottom_chat" class="row toolbar" style="width: 100%;">
-                    <div class="col-10" style="color: #fff;border-radius: 20px;display: flex;align-items: center;">
-                        <i data-action="show_stricker" class="fa fa-smile-o ml-10 font-size-18" aria-hidden="true"></i>
-                        <input type="text" id='msg' class="form-control col-8 ml-10" placeholder="ここで入力する..." onkeydown="if(event.keyCode == 13) doAction(null, 'sendMsg')" style="    background-color: unset;border: unset;" oninput="checkStrickerTags(this)">
-                        <i class="fa fa-picture-o font-size-18 text-right col mr-10" aria-hidden="true" data-action="sendImage"></i>
-                    </div>
-                    <div class="col-2">
-                        <button class="btn btn-primary float-right w-full" type="button" data-action="sendMsg" style="max-width: 90%;border-radius: 20px;">
+                <div id="bottom_chat" class="row toolbar" style="width: 100%;color: #fff;border-radius: 20px;display: flex;align-items: center;">
+                        <div class='col-1'>
+                            <i data-action="show_recorder" class="fa fa-microphone font-size-18 hide" aria-hidden="true"></i>
+                        </div>
+                        <i data-action="show_stricker" class="fa fa-smile-o font-size-18 col-1" aria-hidden="true"></i>
+                        <input type="text" id='msg' class="form-control col-6" placeholder="ここで入力する..." onkeydown="if(event.keyCode == 13) doAction(null, 'sendMsg')" style="background-color: unset;border: unset;" oninput="checkStrickerTags(this)">
+
+                        <div class="dropdown dropup"  style="transform: translate(-150%,0);">
+                            <i data-toggle="dropdown" class="fa fa-comments-o font-size-18 col-1 text-left" aria-hidden="true"></i>
+                          <div class="dropdown-menu dropdown-menu-up" aria-labelledby="...">
+                            <ul>
+                                <li data-action='qm'>はい！</li>
+                                <li data-action='qm'>わかった！</li>
+                                <li data-action='qm'>なるほどね～</li>
+                                <li data-action='qm'>いいね！</li>
+                                <li data-action='qm'>後でね！</li>
+                                <li data-action='qm'>どうなるの？</li>
+                                <li data-action='qm'>どうする？</li>
+                                <li data-action='qm'>もうすぐ完成です～</li>
+                                <li data-action='qm'>どうです？</li>
+                            </ul>
+                          </div>
+                        </div>
+                        <i class="fa fa-picture-o font-size-18 col-1" aria-hidden="true"  style="transform: translate(-20%,0);" data-action="sendImage"></i>
+                        <button class="btn btn-primary col-1 float-right" type="button" data-action="sendMsg" style="max-width: 90%;border-radius: 20px;">
                             <i class="fa fa-paper-plane" aria-hidden="true"></i>
                         </button>
-                    </div>
                 </div>
                 <div id="bottom_video" class="row toolbar hide" style="width: 100%;">
                 </div>
@@ -644,7 +655,7 @@
                 <div id="bottom_music" class="row toolbar hide" style="width: 100%;">
                     <div class="row" style="width: 100%">
                         <div class="col-3">
-                            <img src="res/cd.png" class="rounded-circle cover paused" alt="maki">
+                            <img src="res/cd.png" class="rounded-circle cover paused">
                         </div>
                         <div class="col-9">
                             <div class="row text-center icons">
@@ -662,6 +673,9 @@
                                 </div>
                                 <div class="col-2">
                                     <i data-action="audio_volume" class="fa fa-volume-up" aria-hidden="true"></i>
+                                </div>
+                                <div class="col-2">
+                                    <i data-action="audio_sort" class="fa fa-level-down" aria-hidden="true"></i>
                                 </div>
                             </div>
                             <div class="progress-group" style="position: relative;top: -7px;">
@@ -682,13 +696,15 @@
     <script src="js/jquery.min.js"></script>
     <script src="js/halfmoon.min.js"></script>
     <script src="js/viewer.min.js"></script>
-    <!-- <script src="js/recorder.js"></script> -->
+    <script src="js/recorder.js"></script>
     <script src="js/lazyload.min.js"></script>
     <script src="js/imagesloaded.pkgd.min.js"></script>
     <script src="js/md5.js"></script>
     <script src="js/lrz.bundle.js"></script>
     <script src="js/index.js"></script>
     <script src="js/pose.js"></script>
+    <script src="js/note.js"></script>
+    <script src="js/tip.js"></script>
     <script type="text/javascript">
     function toastAlert() {
         var alertContent = "This is a default alert with <a href='#' class='alert-link'>a link</a> being toasted.";

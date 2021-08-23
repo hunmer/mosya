@@ -129,7 +129,7 @@ function toTime(s) {
     return a[0] * 3600 + a[1] * 60 + a[2] * 1;
 }
 
-function cutString(str, s, e) {
+function cutString(str, s, e, d = '') {
     var i_start = str.indexOf(s);
     if (i_start != -1) {
         i_start += s.length;
@@ -138,7 +138,7 @@ function cutString(str, s, e) {
             return str.substr(i_start, i_end - i_start);
         }
     }
-    return '';
+    return d;
 }
 
 function getFormatedTime(i = 0, date = new Date()) {
@@ -154,20 +154,20 @@ function getFormatedTime(i = 0, date = new Date()) {
 }
 
 function toastPAlert(msg, time, title, type) {
-    halfmoon.initStickyAlert({
+   console.log(halfmoon.initStickyAlert({
         content: msg,
         title: title || '',
         alertType: type || "alert-primary",
         hasDismissButton: false,
         timeShown: time || 3000
-    });
+    }));
 }
 
  function addAnimation(d, x, callback) {
-    var c = d.attr('Class');
-    if (d.attr('animated') != undefined) {
-        d.removeClass(d.attr('animated'))
-    }
+    // if (d.attr('animated') != undefined) {
+    //     d.removeClass(d.attr('animated'))
+    // }
+    removeAnimation(d);
     d.attr('animated', x).addClass('animated ' + x).one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend',
     
     function() {
@@ -197,4 +197,12 @@ function IsPC(){
          if (userAgentInfo.indexOf(Agents[v]) > 0) { flag = false; break; }  
      }  
      return flag;  
+  }
+
+  function hideSidebar(){
+    if($('#page-wrapper').attr('data-sidebar-hidden') != 'hidden') {
+            halfmoon.toggleSidebar();
+            return true;
+        }
+        return false;
   }

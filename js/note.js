@@ -35,9 +35,8 @@ var g_note = {
 						if(texts.length){
 							g_config.tips = texts;
 							local_saveJson('config', g_config);
-							arr = texts.split("\r\n");
+							arr = texts.replaceAll("\r\n", "\n").split("\n");
 						}
-						console.log(arr);
 						queryMsg({type: 'tip_set', data: {
 							list: arr,
 					    time: time,

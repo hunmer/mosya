@@ -117,11 +117,43 @@
     #user-icons div {
         margin-right: 10px;
     }
+
+    .img-mark-dots {
+        position: absolute;
+        border-radius: 50%;
+        border: 3px solid gray;
+        width: 25px;
+        height: 25px;
+        background-position: center top;
+        background-size: cover;
+    }
+
+    .viewer-canvas{
+        position: relative;
+    }
+
+    #btn_toggle {
+        position: fixed;
+        right: 7%;
+        bottom: 13%;
+        z-index: 99999;
+        display: none;
+    }
+
+    .alert-block {
+        width: fit-content !important;
+    }
     </style>
 </head>
 
 <body class="with-custom-webkit-scrollbars with-custom-css-scrollbars" data-dm-shortcut-enabled="true" data-sidebar-shortcut-enabled="true" data-set-preferred-mode-onload="true">
+    <a id='btn_toggle' href="javascript:toggleDots()" class="btn btn-square btn-secondary rounded-circle btn-lg" role="button"><i class="fa fa-tags" aria-hidden="true"></i></a>
     <div class="page-wrapper with-navbar with-sidebar" data-sidebar-hidden="hidden">
+        <div class="sticky-alerts" style="z-index: 99999;">
+            <div id="FYsY6Z" class="alert dispose"><button class="close" data-dismiss="alert" type="button" aria-label="Close"><span aria-hidden="true">×</span></button>
+                <h4 class="alert-heading">Toast!</h4>This is a default alert with <a  class="alert-link">a link</a> being toasted.
+            </div>
+        </div>
         <nav class="navbar">
             <div class="navbar-content">
                 <button class="btn btn-action" type="button" onclick="halfmoon.toggleSidebar()">
@@ -227,12 +259,19 @@
         return r;
     }
 
+    function toggleDots(){
+        if(_viewer.isShown){
+            _viewer.zoomTo(_viewer.initialImageData.ratio);
+            _viewer.reset();
+        }
+    }
+
 
     var g_imageHost = 'https://mosya-server.glitch.me/';
     var socket_url = 'wss:///mosya-server.glitch.me';
 
-    // var g_imageHost = 'http://127.0.0.1/mosya-websocket/';
-    // var socket_url = 'ws:///127.0.0.1:8000';
+    var g_imageHost = 'http://127.0.0.1/mosya-websocket/';
+    var socket_url = 'ws:///127.0.0.1:8000';
     var _viewer;
     var g_cache = {
         filter: '',
@@ -307,6 +346,17 @@
 
     }
 
+    function toastPAlert(msg, time, title, type) {
+       halfmoon.initStickyAlert({
+            content: msg,
+            title: title || '',
+            alertType: type || "alert-primary",
+            hasDismissButton: false,
+            timeShown: time || 3000
+        });
+    }
+
+
     function parseData(json) {
         var enable = [true];
         var h = '<div class="grid-sizer"></div>';
@@ -324,7 +374,9 @@
             h += `
                      <div class="grid-item" data-time="` + json[md5].time + `">
                         <img class="icon" src="res/` + json[md5].user + `.jpg">
-                        <img class="photo" data-src="` + g_imageHost + `saves/` + md5 + `.jpg" src="` + g_imageHost + `saves/_` + md5 + `.jpg" alt="` + desc + `" title="` + desc + `">
+                        <img class="photo" data-md5="`+md5+`" data-src="` + g_imageHost + `saves/` + md5 + `.jpg" src="` + g_imageHost + `saves/_` + md5 + `.jpg" alt="` + desc + `" title="` + desc + `">`+(json[md5].comments ? `
+                            <a class="btn btn-square rounded-circle btn-secondary mark_cnt" style="position: absolute;top: 16px;left: 16px;" role="button">`+Object.keys(json[md5].comments).length+`</a>
+                            ` : '')+`
                     </div>`;
             i++;
         }
@@ -348,7 +400,38 @@
             url(image) {
                 return image.src.replace('/_', '/');
             },
+            viewed(ev) {
+                $('.img-mark-dots').remove();
+                var dom = ev.detail.originalImage;
+                var md5 = $(dom).attr('data-md5');
+                if(g_data.data[md5].comments){
+                    for(var key in g_data.data[md5].comments){
+                        var p = key.split('_');
+                        newDot(p[0], p[1], md5, g_data.data[md5].comments[key]);
+                    }
+                    $('#btn_toggle').show();
+                }
+            },
+            hidden(ev) {
+               $('#btn_toggle').hide();
+               $('.img-mark-dots').remove();
+            },
+            move(ev) {
+                if(Math.abs(Math.abs(_viewer.initialImageData.left) - Math.abs(ev.detail.x)) >= 2 &&  Math.abs(Math.abs(_viewer.initialImageData.top) - Math.abs(ev.detail.y)) >= 2){
+                    $('.img-mark-dots').hide();
+                }else{
+                    //$('.img-mark-dots').show();
+                }
+            },
+            zoom(ev) {
+                if(ev.detail.ratio == _viewer.initialImageData.ratio){
+                    $('.img-mark-dots').show();
+                }else{
+                    $('.img-mark-dots').hide();
+                }
+            },
         });
+
 
         var $grid = $('.grid').isotope({
             itemSelector: '.grid-item',
@@ -363,6 +446,13 @@
             }
         });
     }
+
+    function newDot(x, y, md5, data){
+        var o = $(_viewer.image).offset();
+        var dot = $(`<span class='img-mark-dots' title="`+data.text+`" data-text="`+data.text+`" data-md5="`+md5+`" data-user="`+data.user+`" data-dot="`+(x+'_'+y)+`" style="left: `+x+`%;top:`+y+`%;background-image: url(res/`+data.user+`.jpg);margin-top: `+o.top+`px;margin-left: `+o.left+`px;" onclick="toastPAlert($(this).attr('data-text'), 10000, '', 'alert-primary')"></span>`).insertAfter(_viewer.image);
+    }
+
+
 
     function setDataFilter(start, end) {
         var i = 0;

@@ -80,18 +80,23 @@
             </div>
         </div>
     </div>
-    <div class="modal" id="modal-img" tabindex="-1" role="dialog">
+    <div class="modal modal-full" id="modal-img" tabindex="-1" role="dialog" data-overlay-dismissal-disabled='...' data-esc-dismissal-disabled='...'>
         <div class="modal-dialog" role="document">
             <h5 class="modal-title text-center mt-10"></h5>
             <div class="modal-content modal-content-media w-500">
-                <a href="javascript: halfmoon.toggleModal('modal-img');if(g_cache.post.time > 0) $('#cnt').show();" class="close" role="button" aria-label="Close">
+
+                <a href="javascript: halfmoon.toggleModal('modal-img');if(g_cache.post && g_cache.post.time > 0) $('#cnt').show();" class="close" role="button" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </a>
-                <img src="" class="img-fluid" title="modal-img" style='width: 100%;height: 100%;'>
+                <div id='modal-img-div' style="position: relative;">
+                    <img class="img-fluid" title="modal-img" onclick="modalImgClick(event);" style='width: 100%;height: 100%;'>
+                </div>
+                
             </div>
             <div id='modal_icons_float'>
                 <div class="row mx-auto" style="width: 20%;">
                     <div class="col-md-6">
+                        <a data-action="mark_switch" href="javascript:void(0)" class="btn btn-square btn-secondary rounded-circle btn-lg hide" role="button"><i class="fa fa-pencil" aria-hidden="true"></i></a>
                         <a data-action="downloadImageToServer" href="javascript:void(0)" class="btn btn-square btn-success rounded-circle btn-lg" role="button"><i class="fa fa-upload" aria-hidden="true"></i></a>
                         <a data-action="downloadImage" href="javascript:void(0)" class="btn btn-square btn-primary rounded-circle btn-lg" role="button"><i class="fa fa-download" aria-hidden="true"></i></a>
                     </div>
@@ -198,7 +203,7 @@
         <!-- Sticky alerts -->
         <div class="sticky-alerts">
             <div id="FYsY6Z" class="alert dispose"><button class="close" data-dismiss="alert" type="button" aria-label="Close"><span aria-hidden="true">×</span></button>
-                <h4 class="alert-heading">Toast!</h4>This is a default alert with <a href="#" class="alert-link">a link</a> being toasted.
+                <h4 class="alert-heading">Toast!</h4>This is a default alert with <a  class="alert-link">a link</a> being toasted.
             </div>
         </div>
         <div class="sticky-alerts">
@@ -227,7 +232,7 @@
                     <i class="fa fa-bars" aria-hidden="true"></i>
                 </button>
             </div>
-            <a href="#" class="navbar-brand" style="font-size: 1.5rem;">
+            <a  class="navbar-brand" style="font-size: 1.5rem;">
                 <button class="btn btn-action btn-success hide" type="button" data-action="finish">
                     <i class="fa fa-check" aria-hidden="true"></i>
                     <span class="sr-only">完成!</span>
@@ -319,7 +324,7 @@
                                 </div>
                             </div>
                             <div class="dropdown-divider"></div>
-                            <a href="#" class="dropdown-item text-center text-primary" onclick="g_config.grid = {x: 5, y:5};$('#grid_y,#grid_x').val(5);drawBoard();local_saveJson('config', g_config);">リセット</a>
+                            <a  class="dropdown-item text-center text-primary" onclick="g_config.grid = {x: 5, y:5};$('#grid_y,#grid_x').val(5);drawBoard();local_saveJson('config', g_config);">リセット</a>
                         </div>
                   </div>
                   <div class="btn-group dropdown with-arrow mr-10" role="group">
@@ -348,8 +353,8 @@
                                                         <i class="fa fa-upload" aria-hidden="true"></i>
                                                         <span class="sr-only">upload</span>
                     </button>
-                    <!-- <a href="#" class="btn btn-primary" role="button">Get started</a> -->
-                    <img id='img_user' onclick="location.reload();" src="res/user.jpg" class="rounded-circle user-icon" alt="user">
+                    <!-- <a  class="btn btn-primary" role="button">Get started</a> -->
+                    <img id='img_user' data-action="previewImage" onclick="return;location.reload();" src="res/user.jpg" class="rounded-circle user-icon" alt="user">
                     <div id='status' class="bg-dark-light"></div>
                 </div>
         </nav>
@@ -414,8 +419,8 @@
                     <span class="ml-2">1</span>
                 </button>
             </div>
-            <div id="tabs_contents" style="margin-bottom: 100px">
-                <div id='content_chat' class='_content'>
+            <div id="tabs_contents" >
+                <div id='content_chat' class='_content' style="margin-bottom: 100px">
                     <table class="table table-striped">
                         <thead>
                             <tr>
@@ -443,8 +448,9 @@
                             </button>
                             <div class="dropdown-menu" aria-labelledby="dropdown-toggle-btn-1">
                                 <!-- <h6 class="dropdown-header">Share</h6> -->
-                                <a href="#" class="dropdown-item" data-action="playlist_add">曲リンク</a>
-                                <a href="#" class="dropdown-item" data-action="playlist_set">リストリンク</a>
+                                <a  class="dropdown-item" data-action="playlist_add">曲リンク</a>
+                                <a  class="dropdown-item" data-action="playlist_set">リストリンク</a>
+                                <a  class="dropdown-item" data-action="player_embed">embed</a>
                                 <div class="dropdown-divider"></div>
                                 <div class="dropdown-content">
                                     <button class="btn btn-block" type="button" onclick="window.open('https://www.youtube.com', '_blank')">Youtubeへ</button>
@@ -458,29 +464,12 @@
                             <tr>
                                 <th>#</th>
                                 <th style="width: 70%;">曲</th>
-                                <!-- アーティスト -->
                                 <th class="text-right"></th>
                             </tr>
                         </thead>
-                        <!-- <tbody data-action="playSong" data-vid="kzZ6KXDM1RI">
-                             <tr>
-                          <th>
-                              <img src="res/maki.jpg" class="img-fluid rounded-circle user-icon" alt="maki">
-                          </th>
-                          <td>test</td>
-                          <td class="text-right">20:17</td>
-                        </tr>
-                        </tbody>
-                        <tbody data-action="playSong" data-vid="kNidScZjJoA">
-                             <tr>
-                          <th>
-                              <img src="res/maki.jpg" class="img-fluid rounded-circle user-icon" alt="maki">
-                          </th>
-                          <td>test</td>
-                          <td class="text-right">20:17</td>
-                        </tr>
-                        </tbody> -->
                     </table>
+                    <div id='iframe_music'>
+                    </div>
                 </div>
                 <div id='content_lab' class='_content hide p-5' style="overflow-x: hidden;min-height: 300px;">
                     <div class="btn-toolbar p-5 rounded" role="toolbar" id='tabs'>
@@ -618,7 +607,7 @@
                             <i data-action="show_recorder" class="fa fa-microphone font-size-18 hide" aria-hidden="true"></i>
                         </div>
                         <i data-action="show_stricker" class="fa fa-smile-o font-size-18 col-1" aria-hidden="true"></i>
-                        <input type="text" id='msg' class="form-control col-6" placeholder="ここで入力する..." onkeydown="if(event.keyCode == 13) doAction(null, 'sendMsg')" style="background-color: unset;border: unset;" oninput="checkStrickerTags(this)">
+                        <input type="text" id='msg' class="form-control col-6" placeholder="ここで入力する..." onkeydown="if(event.keyCode == 13) doAction(null, 'sendMsg')" style="background-color: unset;border: unset;    padding-right: 35px;" oninput="checkStrickerTags(this)">
 
                         <div class="dropdown dropup"  style="transform: translate(-150%,0);">
                             <i data-toggle="dropdown" class="fa fa-comments-o font-size-18 col-1 text-left" aria-hidden="true"></i>
@@ -637,7 +626,7 @@
                           </div>
                         </div>
                         <i class="fa fa-picture-o font-size-18 col-1" aria-hidden="true"  style="transform: translate(-20%,0);" data-action="sendImage"></i>
-                        <button class="btn btn-primary col-1 float-right" type="button" data-action="sendMsg" style="max-width: 90%;border-radius: 20px;">
+                        <button class="btn btn-primary col float-right" type="button" data-action="sendMsg" style="max-width: 90%;border-radius: 20px;">
                             <i class="fa fa-paper-plane" aria-hidden="true"></i>
                         </button>
                 </div>
@@ -713,6 +702,7 @@
     <script src="js/note.js"></script>
     <script src="js/tip.js"></script>
     <script src="js/3d.js"></script>
+    <script src="js/mark.js"></script>
     <script type="text/javascript">
     function toastAlert() {
         var alertContent = "This is a default alert with <a href='#' class='alert-link'>a link</a> being toasted.";

@@ -11,9 +11,10 @@ var g_api = 'https://neysummer-api.glitch.me/';
 var g_test = 1;
 
 // var socket_url = 'ws://127.0.0.1:8000';
-// // var socket_url = 'ws://192.168.31.209:8000';
+// var socket_url = 'ws://192.168.31.209:8000';
 // var g_api = 'api/';
 // var g_imageHost = 'http://127.0.0.1/mosya-websocket/';
+// var g_imageHost = 'http://192.168.31.209/mosya-websocket/';
 
 var g_cache = {
     logined: false,
@@ -38,6 +39,20 @@ halfmoon.toggleSidebar = () => {
     }
     return halfmoon.toggleSidebar1();
 }
+
+halfmoon.toggleModal1 = halfmoon.toggleModal;
+halfmoon.toggleModal = (id) => {
+    var showing = $('#'+id).hasClass('show');
+    switch(id){
+        case 'modal-img':
+            if(showing){
+                g_dot.div.hide();
+            }
+            break;
+    }
+    halfmoon.toggleModal1(id);
+}
+
 $(function() {
     if (_GET['user']) {
         setUser(_GET['user']);
@@ -269,11 +284,10 @@ function init() {
 
                     case 'img_sendImage':
                         var s = '<img class="thumb" data-user="'+g_config.user.name+'" data-action="previewImage" src="' + rst.base64 + '" alt="Upload by ' + g_config.user.name + '">';
-                        console.log(s);
-                        var m = md5(s);
+                        var m = md5(rst.base64);
                         g_cache.sendedImgMd5 = m;
                         g_cache.sendedImg = s;
-                        queryMsg({ type: 'msg', image: true, user: g_config.user.name, msg: s, md5: m });
+                        queryMsg({ type: 'msg', image: m, user: g_config.user.name, msg: s});
                         break;
 
                     case 'input_bg':
@@ -296,8 +310,7 @@ function init() {
         if($('.modal.show').length){
             halfmoon.toggleModal($('.modal.show')[0].id);
         }else
-        if($('#page-wrapper').attr('data-sidebar-hidden') != 'hidden') {
-            halfmoon.toggleSidebar();
+        if(hideSidebar()) {
         }else
         if(g_cache.tab != undefined){
             g_cache.tab = undefined;
@@ -570,6 +583,27 @@ function doAction(dom, action, params) {
         g_actions[action[0]](dom, action, params);
     }
     switch (action[0]) {
+        case 'player_embed':
+            // https://open.spotify.com/playlist/71j4gz1VqJ3a6LGCVpQsYX
+            var url = prompt('embed url', g_test ? 'https://open.spotify.com/playlist/71j4gz1VqJ3a6LGCVpQsYX' : '');
+            if(url != undefined && url.length){
+                if(url.indexOf('open.spotify.com') != -1){
+                    var id = cutString(url + '&', 'open.spotify.com/playlist/', '&');
+                    if(!id.length) return;
+                    url = '//open.spotify.com/embed/playlist/'+id+'?theme=0';
+                }else
+                if(url.indexOf('music.163.com') != -1){
+                    var id = cutString(url + '&', 'playlist?id=', '&');
+                    if(!id.length) return;
+                    url = '//music.163.com/outchain/player?type=0&id='+id+'&auto=1';
+                }else{
+                    alert('not supported now');
+                    return;
+                }
+                halfmoon.deactivateAllDropdownToggles();
+                queryMsg({type: 'player_embed', url: url}, true);
+            }
+            break;
         case 'qm':
             halfmoon.deactivateAllDropdownToggles();
             sendMsg($(dom).html());
@@ -881,9 +915,7 @@ function doAction(dom, action, params) {
             $('#checkbox_tts').prop('checked', g_config.tts);
             break;
         case 'openViewer':
-            if ($('#page-wrapper').attr('data-sidebar-hidden') != 'hidden') {
-                halfmoon.toggleSidebar();
-            }
+            hideSidebar();
             if (_viewer != undefined) _viewer.destroy();
             _viewer = new Viewer(dom, {
                 backdrop: 'static',
@@ -922,7 +954,7 @@ function doAction(dom, action, params) {
             var index = keys.indexOf(key);
             if (index != -1) {
                 var prev = $(selected).prev();
-                if (prev.length == 0 || ['like', 'search'].indexOf(prev.attr('data-id')) != -1) {
+                if (prev.length == 0 || ['like', 'search', 'history'].indexOf(prev.attr('data-id')) != -1) {
                     selected.appendTo($('#stricker_tabs div'));
                     to = keys.length - 1;
                 } else {
@@ -1325,6 +1357,7 @@ function doAction(dom, action, params) {
             }
             break;
         case 'previewImage':
+            hideSidebar();
             $('#cnt').hide();
             if (dom.src.indexOf('/animation/') != -1) {
                 var now = getNow();
@@ -1335,11 +1368,17 @@ function doAction(dom, action, params) {
                 }
             }
 
-            $('[data-action="downloadImageToServer"]').css('display', dom.src.indexOf('data:image/') != -1 ? '' : 'none');
+            var saved = $(dom).next('.saved').length || $(dom).hasClass('serverImg'); // 是否在服务器上存在
+            var m = $(dom).attr('data-md5');
+            if(m){
+                // 获取评论
+                queryMsg({type: 'comments_get', md5: m});
+            }
+            $('[data-action=mark_switch]').toggleClass('hide', !saved);
+            $('[data-action="downloadImageToServer"]').css('display', dom.src.indexOf('data:image/') == -1 || saved ? 'none' : '');
 
             $('#modal-img .modal-title').html(dom.alt);
-
-             $('#modal-img').attr('data-user', $(dom).attr('data-user')).
+             $('#modal-img').attr('data-md5', m).attr('data-user', $(dom).attr('data-user')).
              find('img').attr('src', '').attr('src', dom.src);
 
             halfmoon.toggleModal('modal-img');
@@ -1367,20 +1406,28 @@ function doAction(dom, action, params) {
             if(dom){
                 addAnimation($(dom), 'rubberBand');
             }
-            var toolbar = action.length > 2 ? action[2] : action[1];
-            for (var con of $('.toolbar')) {
-                if (con.id == 'bottom_' + toolbar && $(con).html() != '') {
+            
+            var hide = false;
+            for (var con of $('._content')) {
+                if (con.id == 'content_' + action[1]) {
+                    hide = $(con).attr('data-hide');
                     $(con).show();
                 } else {
                     $(con).hide();
                 }
             }
-            for (var con of $('._content')) {
-                if (con.id == 'content_' + action[1]) {
-                    $(con).show();
-                } else {
-                    $(con).hide();
+            if(!hide){
+                $('.navbar-fixed-bottom').show();
+                var toolbar = action.length > 2 ? action[2] : action[1];
+                for (var con of $('.toolbar')) {
+                    if (con.id == 'bottom_' + toolbar && $(con).html() != '') {
+                        $(con).show();
+                    } else {
+                        $(con).hide();
+                    }
                 }
+            }else{
+                $('.navbar-fixed-bottom').hide();
             }
             switch (action[1]) {
                 case 'chat':
@@ -1692,6 +1739,17 @@ function reviceMsg(data) {
         return g_revices[type](data);
     }
     switch (type) {
+        case 'player_embed':
+            reviceMsg({
+                type: 'msg',
+                user: data.user,
+                msg: `<a href="javascript: doAction(null, 'toTab,music')">▶ music playlist</a>`
+            });
+            $('#content_music table, #bottom_music .row').hide();
+            _audio.pause();
+            $('#iframe_music').css('height', window.outerHeight-$('#iframe_music').offset().top+'px').html(`
+                <iframe src="`+data.url+`" width="100%" height="100%" frameBorder="0" allowtransparency="true" allow="encrypted-media"></iframe>`);
+            break;
         case 'pose_list':
             parsePoseData(data.data, data.time, false);
             break;
@@ -1702,8 +1760,8 @@ function reviceMsg(data) {
             }
             break;
         case 'sendedImg':
-            if(data.data == g_cache.sendedImgMd5){
-                reviceMsg({ type: 'msg', user: g_config.user.name, msg: g_cache.sendedImg});
+            if(data.md5 == g_cache.sendedImgMd5){
+                reviceMsg({ type: 'msg', user: g_config.user.name, msg: g_cache.sendedImg, exists: data.exists});
                 delete g_cache.sendedImgMd5;
                 delete g_cache.sendedImg;
             }
@@ -1751,7 +1809,7 @@ function reviceMsg(data) {
             $('.sidebar-menu h3').html('第 ' + (days.length+1) + ' 日').show();
             $('#days_tabs div').html(h);
             if (data.removed) {
-                $('.div-photo[data-md5="' + data.removed + '"]').remove();
+                $('.serverImg[data-md5="' + data.removed + '"]').parent('.div-photo').remove();
             }
             break;
         case 'pics':
@@ -1762,7 +1820,7 @@ function reviceMsg(data) {
             }
             for (var key in data.data) {
                 var detail = data.data[key];
-                h += `<div class="div-photo" data-md5="` + key + `"><h6 class="text-center">` + getFormatedTime(1, new Date(detail.time)) + ' (' + detail.user + `)</h6><img data-action="openViewer" src="` + g_imageHost + `saves/_` + key + `.jpg" class="serverImg" alt="` + detail.user + `">`;
+                h += `<div class="div-photo" data-md5="` + key + `"><h6 class="text-center">` + getFormatedTime(1, new Date(detail.time)) + ' (' + detail.user + `)</h6><img data-md5="` + key + `" data-action="previewImage" src="` + g_imageHost + `saves/_` + key + `.jpg" class="serverImg" alt="` + detail.user + `">`;
                 if (g_config.user.name == 'maki') {
                     h += `<a  class="btn btn-square btn-danger rounded-circle" data-action="deleteServerImage" role="button"><i class="fa fa-trash-o" aria-hidden="true"></i></a> 
                     `;
@@ -1798,6 +1856,9 @@ function reviceMsg(data) {
             // 这里只发出提示
             break;
         case 'playlist_set':
+            $('#content_music table, #bottom_music .row').show();
+            $('#iframe_music').html('');
+
             reviceMsg({
                 type: 'msg',
                 user: data.user,
@@ -1806,6 +1867,9 @@ function reviceMsg(data) {
             parseMusiclist(data.data);
             break;
         case 'playlist_add':
+            $('#content_music table, #bottom_music .row').show();
+            $('#iframe_music').html('');
+
             reviceMsg({
                 type: 'msg',
                 user: data.user,
@@ -1892,7 +1956,7 @@ function reviceMsg(data) {
                   <th>
                       <img src="` + getUserIcon(data.user) + `" class="rounded-circle user-icon" alt="` + data.user + `">
                   </th>
-                  <td>` + (type == 'msg' ? data.msg : `
+                  <td><div class="position-relative">` + (type == 'msg' ? data.msg : `
 
                         <span class="badge-group" role="group" style="width: 100%;">
                           <a href="javascript: void(0)" onclick="playRecord(this);" class="badge badge-success badge-pill play_btn">
@@ -1904,7 +1968,7 @@ function reviceMsg(data) {
                         </div>
                           </span>
                         </span>
-                    `) + `</td>
+                    `) + `</div></td>
                   <td class="text-right">` + getFormatedTime() + `</td>
                 </tr>`);
             var image = dom.find('.thumb');
@@ -1927,14 +1991,22 @@ function reviceMsg(data) {
                      soundTip(g_config.tipSound || 'res/pop.mp3');
                 //}
             }
-            if (data.audio) {
-                $(`<a  class="btn btn-square btn-success rounded-circle" data-action="play_strickerAudio" data-audio="` + data.audio + `" style="position: relative;bottom: 5px;right: 20px;" role="button"><i class="fa fa-play" aria-hidden="true"`+(data.tts ? ' alt="'+data.tts+'"' : '')+`></i></a> 
-                `).insertAfter(image);
-                $('#audio_stricker')[0].src = data.audio;
-            }
+            
             if (image.length) {
+
+                if (data.audio) {
+                    $(`<a  class="btn btn-square btn-success rounded-circle" data-action="play_strickerAudio" data-audio="` + data.audio + `" style="position: absolute;bottom: 5px;right: 20px;" role="button"><i class="fa fa-play" aria-hidden="true"`+(data.tts ? ' alt="'+data.tts+'"' : '')+`></i></a> 
+                    `).insertAfter(image);
+                    $('#audio_stricker')[0].src = data.audio;
+                }
+
+                var m = md5(image[0].src);
+                
                 if (image[0].src.indexOf('data:image/') != -1) {
-                    $(image).attr('data-md5', md5(image[0].src));
+                    $(image).attr('data-md5', m);
+                }
+                if(data.exists){ // 已存在于服务器
+                    reviceMsg({type: 'save', data: m});
                 }
                 // $(`<a  class="btn btn-square btn-secondary rounded-circle" data-action="show_stricker" style="position: relative;top: 0px;left: 20px;" role="button"><i class="fa fa-smile-o font-size-20" aria-hidden="true"></i></a> 
                 // `).insertBefore(image);
@@ -1949,7 +2021,7 @@ function reviceMsg(data) {
             });
             _record.btn = 'i[data-action="record_play"]';
             
-            break;
+            return image;
     }
 }
 

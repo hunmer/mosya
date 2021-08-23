@@ -569,10 +569,6 @@ function queryPlaylist(id){
         }
     });
 }
-var g_actions = {};
-function registerAction(name, callback){
-    g_actions[name] = callback;
-}
 
 function doAction(dom, action, params) {
     var action = action.split(',');
@@ -1729,11 +1725,7 @@ function me(){
     return g_config.user.name;
 }
 
-var g_revices = {};
 
-function registerRevice(name, callback){
-    g_revices[name] = callback;
-}
 
 function reviceMsg(data) {
     console.log(data);

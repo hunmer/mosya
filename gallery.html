@@ -28,6 +28,7 @@
     <link rel="stylesheet" type="text/css" href="css/font-awesome.min.css">
     <link rel="stylesheet" type="text/css" href="css/default.css">
     <link rel="stylesheet" type="text/css" href="css/default.date.css">
+    <link rel="stylesheet" href="css/animate.min.css">
     <link href="css/halfmoon-variables.min.css" rel="stylesheet" />
     <style type="text/css">
     div.grid .photo {
@@ -148,7 +149,10 @@
 </head>
 
 <body class="with-custom-webkit-scrollbars with-custom-css-scrollbars" data-dm-shortcut-enabled="true" data-sidebar-shortcut-enabled="true" data-set-preferred-mode-onload="true">
-    <a id='btn_toggle' href="javascript:toggleDots()" class="btn btn-square btn-secondary rounded-circle btn-lg" role="button"><i class="fa fa-tags" aria-hidden="true"></i></a>
+    <div id='btn_toggle'>
+        <a href="javascript:toggleDots()" class="btn btn-square btn-secondary rounded-circle btn-lg mr-10" role="button"><i class="fa fa-eye" aria-hidden="true"></i></a>
+        <a data-action="mark_switch" class="btn btn-square btn-secondary rounded-circle btn-lg" role="button"><i class="fa fa-pencil" aria-hidden="true"></i></a>
+    </div>
     <div class="page-wrapper with-navbar with-sidebar" data-sidebar-hidden="hidden">
         <div class="sticky-alerts" style="z-index: 99999;">
             <div id="FYsY6Z" class="alert dispose"><button class="close" data-dismiss="alert" type="button" aria-label="Close"><span aria-hidden="true">×</span></button>
@@ -178,39 +182,6 @@
                 </div>
                 <input type="text" class="form-control timepicker text-center" style="width: 125px;" readonly placeholder="日付を選択">
             </div>
-            <!--       <ul class="navbar-nav d-none d-md-flex">
-        <li class="nav-item active">
-          <a href="#" class="nav-link">Docs</a>
-        </li>
-        <li class="nav-item">
-          <a href="#" class="nav-link">Products</a>
-        </li>
-      </ul>
-      <form class="form-inline d-none d-md-flex ml-auto" action="..." method="..."> 
-        <input type="text" class="form-control" placeholder="Email address" required="required">
-        <button class="btn btn-primary" type="submit">Sign up</button>
-      </form>
-      <div class="navbar-content d-md-none ml-auto"> 
-        <div class="dropdown with-arrow">
-          <button class="btn" data-toggle="dropdown" type="button" id="navbar-dropdown-toggle-btn-1">
-            Menu
-            <i class="fa fa-angle-down" aria-hidden="true"></i>
-          </button>
-          <div class="dropdown-menu dropdown-menu-right w-200" aria-labelledby="navbar-dropdown-toggle-btn-1">
-            <a href="#" class="dropdown-item">Docs</a>
-            <a href="#" class="dropdown-item">Products</a>
-            <div class="dropdown-divider"></div>
-            <div class="dropdown-content">
-              <form action="..." method="...">
-                <div class="form-group">
-                  <input type="text" class="form-control" placeholder="Email address" required="required">
-                </div>
-                <button class="btn btn-primary btn-block" type="submit">Sign up</button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div> -->
         </nav>
         <div class="sidebar">
         </div>
@@ -228,276 +199,8 @@
     <script src="js/picker.js"></script>
     <script src="js/picker.date.js"></script>
     <script src="js/ja_JP.js"></script>
-    <script type="text/javascript">
-    var g_localKey = 'mosya_';
-    var g_data = local_readJson('data', {
-        md5: undefined,
-        datas: {}
-    });
-
-    function local_saveJson(key, data) {
-        if (window.localStorage) {
-            key = g_localKey + key;
-            data = JSON.stringify(data);
-            if (data == undefined) data = '[]';
-            return localStorage.setItem(key, data);
-        }
-        return false;
-    }
-
-    function local_readJson(key, defaul = {}, check = false) {
-        if (!window.localStorage) return defaul;
-        key = g_localKey + key;
-        var r = JSON.parse(localStorage.getItem(key));
-        if (r === null) return defaul;
-        if (check) {
-            for (var k in defaul) {
-                if (r[k] == undefined) {
-                    r[k] = defaul[k];
-                }
-            }
-        }
-        return r;
-    }
-
-    function toggleDots(){
-        if(_viewer.isShown){
-            _viewer.zoomTo(_viewer.initialImageData.ratio);
-            _viewer.reset();
-        }
-    }
-
-
-    var g_imageHost = 'https://mosya-server.glitch.me/';
-    var socket_url = 'wss:///mosya-server.glitch.me';
-
-    // var g_imageHost = 'http://127.0.0.1/mosya-websocket/';
-    // var socket_url = 'ws:///127.0.0.1:8000';
-    var _viewer;
-    var g_cache = {
-        filter: '',
-        logined: false,
-    }
-    $(function() {
-        if (g_data.data) {
-            parseData(g_data.data);
-        }
-        initWebsock();
-        $(document).on('click', '[data-action]', function(event) {
-            doAction(this, $(this).attr('data-action'));
-        });
-    });
-
-    function getTime(date) {
-        return date.getMonth() + 1 + '/' + date.getDate() + ' ' + _s(date.getHours()) + ':' + _s(date.getMinutes());
-    }
-
-    function _s(i, j = '') {
-        return (i < 10 ? '0' + i : i) + j;
-    }
-
-    function _s1(s, j = '') {
-        s = parseInt(s);
-        return (s == 0 ? '' : (s < 10 ? '0' + s : s) + j);
-    }
-
-
-    function getTime1(s) {
-        s = Number(s);
-        if (s >= 86400) {
-            return parseInt(s / 86400) + '天';
-        }
-        var h = 0,
-            m = 0;
-        if (s >= 3600) {
-            h = parseInt(s / 3600);
-            s %= 3600;
-        }
-        if (s >= 60) {
-            m = parseInt(s / 60);
-            s %= 60;
-        }
-        return _s1(h, '时') + _s(m, '分') + _s(parseInt(s), '秒');
-    }
-
-    function doAction(dom, action, params) {
-        var action = action.split(',');
-        switch (action[0]) {}
-    }
-
-    function setFilter(dom, search) {
-        $('.selected').removeClass('selected');
-        if (g_cache.filter == search) {
-            search = '';
-            g_cache.filter = '';
-        } else {
-            $(dom).find('img').addClass('selected');
-            g_cache.filter = search;
-        }
-        var i = 0;
-        $('.grid').isotope({
-            filter: function() {
-                var name = $(this).find('img[title]').attr('title');
-                var b = name.match(search);
-                if (b) i++;
-                return b;
-            }
-        });
-        $('#cnt').html(i + '枚');
-
-    }
-
-    function toastPAlert(msg, time, title, type) {
-       halfmoon.initStickyAlert({
-            content: msg,
-            title: title || '',
-            alertType: type || "alert-primary",
-            hasDismissButton: false,
-            timeShown: time || 3000
-        });
-    }
-
-
-    function parseData(json) {
-        var enable = [true];
-        var h = '<div class="grid-sizer"></div>';
-        var i = 0;
-        for (var md5 in json) {
-            var date = new Date(json[md5].time);
-            var day = date.getFullYear() + '/' + date.getMonth() + '/' + date.getDate();
-            if (enable[day] == undefined) {
-                enable[day] = day.split('/');
-            }
-            var desc = '[' + getTime(date) + '] By ' + json[md5].user;
-            if (json[md5].spend != undefined) {
-                desc += `(` + getTime1(json[md5].spend) + ')';
-            }
-            h = `<div class="grid-item" data-time="` + json[md5].time + `">
-                        <img class="icon" src="res/` + json[md5].user + `.jpg">
-                        <img class="photo" data-md5="`+md5+`" data-src="` + g_imageHost + `saves/` + md5 + `.jpg" src="` + g_imageHost + `saves/_` + md5 + `.jpg" alt="` + desc + `" title="` + desc + `">`+(json[md5].comments ? `
-                            <a class="btn btn-square rounded-circle btn-secondary mark_cnt" style="position: absolute;top: 16px;left: 16px;" role="button">`+Object.keys(json[md5].comments).length+`</a>
-                            ` : '')+`
-                    </div>` + h;
-            i++;
-        }
-        $('#cnt').html(i + '枚');
-        $('.grid').html(h);
-
-        $('.timepicker').pickadate({
-            disable: Object.values(enable),
-            onSet: function(thingSet) {
-                setDataFilter(thingSet.select, thingSet.select + 3600 * 24 * 1000);
-            }
-        });
-
-        _viewer = new Viewer($('.grid')[0], {
-            backdrop: 'static',
-            toggleOnDblclick: false,
-            filter(image) {
-                return image.classList.contains('photo');
-            },
-            title: (image, imageData) => `${image.alt} (${imageData.naturalWidth} × ${imageData.naturalHeight})`,
-            url(image) {
-                return image.src.replace('/_', '/');
-            },
-            viewed(ev) {
-                $('.img-mark-dots').remove();
-                var dom = ev.detail.originalImage;
-                var md5 = $(dom).attr('data-md5');
-                if(g_data.data[md5].comments){
-                    for(var key in g_data.data[md5].comments){
-                        var p = key.split('_');
-                        newDot(p[0], p[1], md5, g_data.data[md5].comments[key]);
-                    }
-                    $('#btn_toggle').show();
-                }
-            },
-            hidden(ev) {
-               $('#btn_toggle').hide();
-               $('.img-mark-dots').remove();
-            },
-            move(ev) {
-                if(Math.abs(Math.abs(_viewer.initialImageData.left) - Math.abs(ev.detail.x)) >= 2 &&  Math.abs(Math.abs(_viewer.initialImageData.top) - Math.abs(ev.detail.y)) >= 2){
-                    $('.img-mark-dots').hide();
-                }else{
-                    //$('.img-mark-dots').show();
-                }
-            },
-            zoom(ev) {
-                if(ev.detail.ratio == _viewer.initialImageData.ratio){
-                    $('.img-mark-dots').show();
-                }else{
-                    $('.img-mark-dots').hide();
-                }
-            },
-        });
-
-
-        var $grid = $('.grid').isotope({
-            itemSelector: '.grid-item',
-            percentPosition: true,
-            masonry: {
-                columnWidth: '.grid-sizer'
-            }
-        });
-        $grid.imagesLoaded().progress(function(instance, image) {
-            if (image.img.classList.contains('photo')) {
-                $grid.isotope('layout');
-            }
-        });
-    }
-
-    function newDot(x, y, md5, data){
-        var o = $(_viewer.image).offset();
-        x = _viewer.image.width * (x / 100);
-        y = _viewer.image.height * (y / 100);
-        var dot = $(`<span class='img-mark-dots' title="`+data.text+`" data-text="`+data.text+`" data-md5="`+md5+`" data-user="`+data.user+`" data-dot="`+(x+'_'+y)+`" style="left: `+x+`px;top:`+y+`px;background-image: url(res/`+data.user+`.jpg);margin-top: `+o.top+`px;margin-left: `+o.left+`px;" onclick="toastPAlert($(this).attr('data-text'), 10000, '', 'alert-primary')"></span>`).insertAfter(_viewer.image);
-    }
-
-
-
-    function setDataFilter(start, end) {
-        var i = 0;
-        $('.grid').isotope({
-            filter: function() {
-                var time = $(this).attr('data-time');
-                var b = start == undefined || time >= start && time <= end;
-                if (b) i++;
-                return b;
-            }
-        });
-        $('#cnt').html(i + '枚');
-    }
-
-    var connection;
-    initWebsock();
-
-    function initWebsock() {
-        if (connection != undefined) connection.close();
-        connection = new WebSocket(socket_url);
-        connection.onopen = () => {
-            queryMsg({ type: 'pics', md5: g_data.md5 });
-        }
-
-        connection.onclose = () => {}
-
-        connection.onmessage = (e) => {
-            var data = JSON.parse(e.data);
-            if (data.type == 'pics') {
-                connection.close();
-                if (data.data) {
-                    g_data = data;
-                    local_saveJson('data', g_data);
-                    parseData(data.data);
-                }
-            }
-        }
-    }
-
-    function queryMsg(data) {
-        connection.send(JSON.stringify(data));
-    }
-    </script>
+    <script src="js/gallery.js"></script>
+    <script src="js/mark.js"></script>
 </body>
 
 </html>

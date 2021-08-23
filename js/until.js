@@ -164,9 +164,6 @@ function toastPAlert(msg, time, title, type) {
 }
 
 function addAnimation(d, x, callback) {
-    // if (d.attr('animated') != undefined) {
-    //     d.removeClass(d.attr('animated'))
-    // }
     removeAnimation(d);
     d.attr('animated', x).addClass('animated ' + x).one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend',
 
@@ -207,11 +204,13 @@ function hideSidebar() {
     return false;
 }
 
-function getTextWithPrompt(event, title) {
-    event.preventDefault(true);
-    event.stopPropagation();
-    var m = prompt(title, event.srcElement.value);
-    if (m != undefined) {
-        event.srcElement.value = m;
-    }
+
+var g_actions = {};
+function registerAction(name, callback){
+    g_actions[name] = callback;
+}
+
+var g_revices = {};
+function registerRevice(name, callback){
+    g_revices[name] = callback;
 }

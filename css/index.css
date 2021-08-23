@@ -58,6 +58,9 @@
     width: 100%;
     padding: 10px;
 }
+.dark-mode {
+    color: var(--dm-base-text-color);
+}
 
 @font-face {
     font-family: janFont;
@@ -100,8 +103,8 @@ li {
 }     
 
 body {
+    color: var(--lm-base-text-color);
     overflow: hidden;
-    color: #fff;
     max-width: 700px;
     display: none;
     background-position: center top;

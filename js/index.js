@@ -839,6 +839,7 @@ function doAction(dom, action, params) {
             g_config.fixInput = $('#checkbox_fixInput').prop('checked');
             local_saveJson('config', g_config);
             halfmoon.toggleModal('modal-custom');
+            initSetting();
             break;
         case 'openSetting':
             g_cache.bg =  g_config.bg || '';
@@ -907,7 +908,7 @@ function doAction(dom, action, params) {
                 `);
             halfmoon.toggleModal('modal-custom');
             $('#bg_blur').val(g_config.blur || 0);
-            $('option[value="' + g_config.tipSound + '"]').prop('selected', true);
+            $('#select-tip option[value="' + g_config.tipSound + '"]').prop('selected', true);
             if(typeof(g_config.bg) == 'string' && g_config.bg.substr(0, 5) == 'data:'){
                 $('#select-bg option[value="upload"]').prop('selected', true);
             }else{
@@ -2374,14 +2375,8 @@ function test() {
         $('#select-slug option[value="'+g_config.poseSlug+'"]').prop('selected', true)
     }
     _audio.volume = g_config.volume || 1;
-
-    if(g_config.darkmode === false){
-        $('body').removeClass('dark-mode');
-    }
-    if(g_config.bg){
-        setBg(g_config.bg);
-        
-    }
+    initSetting();
+   
     // if(g_config.user.name == 'maki'){
     //     _audio.src = 'res/music.mp3';
     // }
@@ -2398,6 +2393,15 @@ function test() {
     //setTimeout(() => {doAction(null, 'toTab,lab')}, 500);
     
 
+}
+
+function initSetting(){
+     if(g_config.darkmode === false){
+        $('body').removeClass('dark-mode');
+    }
+    if(g_config.bg){
+        setBg(g_config.bg);
+    }
 }
 
 function socketTest() {

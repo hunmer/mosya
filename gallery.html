@@ -372,13 +372,12 @@
             if (json[md5].spend != undefined) {
                 desc += `(` + getTime1(json[md5].spend) + ')';
             }
-            h += `
-                     <div class="grid-item" data-time="` + json[md5].time + `">
+            h = `<div class="grid-item" data-time="` + json[md5].time + `">
                         <img class="icon" src="res/` + json[md5].user + `.jpg">
                         <img class="photo" data-md5="`+md5+`" data-src="` + g_imageHost + `saves/` + md5 + `.jpg" src="` + g_imageHost + `saves/_` + md5 + `.jpg" alt="` + desc + `" title="` + desc + `">`+(json[md5].comments ? `
                             <a class="btn btn-square rounded-circle btn-secondary mark_cnt" style="position: absolute;top: 16px;left: 16px;" role="button">`+Object.keys(json[md5].comments).length+`</a>
                             ` : '')+`
-                    </div>`;
+                    </div>` + h;
             i++;
         }
         $('#cnt').html(i + '枚');
@@ -450,7 +449,9 @@
 
     function newDot(x, y, md5, data){
         var o = $(_viewer.image).offset();
-        var dot = $(`<span class='img-mark-dots' title="`+data.text+`" data-text="`+data.text+`" data-md5="`+md5+`" data-user="`+data.user+`" data-dot="`+(x+'_'+y)+`" style="left: `+x+`%;top:`+y+`%;background-image: url(res/`+data.user+`.jpg);margin-top: `+o.top+`px;margin-left: `+o.left+`px;" onclick="toastPAlert($(this).attr('data-text'), 10000, '', 'alert-primary')"></span>`).insertAfter(_viewer.image);
+        x = _viewer.image.width * (x / 100);
+        y = _viewer.image.height * (y / 100);
+        var dot = $(`<span class='img-mark-dots' title="`+data.text+`" data-text="`+data.text+`" data-md5="`+md5+`" data-user="`+data.user+`" data-dot="`+(x+'_'+y)+`" style="left: `+x+`px;top:`+y+`px;background-image: url(res/`+data.user+`.jpg);margin-top: `+o.top+`px;margin-left: `+o.left+`px;" onclick="toastPAlert($(this).attr('data-text'), 10000, '', 'alert-primary')"></span>`).insertAfter(_viewer.image);
     }
 
 

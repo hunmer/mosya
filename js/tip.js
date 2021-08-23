@@ -97,7 +97,7 @@ registerRevice('typing', (data) => {
     }
 });
 registerRevice('tip_set', (data) => {
-    if(data.user != g_config.user.name){
+    //if(data.user != g_config.user.name){
         g_tip.setList(data.data, false);
-    }
+    //}
 });

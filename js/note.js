@@ -1,7 +1,6 @@
 var g_note = {
 	init: () => {
-		g_note.btn = $(`
-				<button class="btn ml-5" type="button" data-action="toTab,note"><i class="fa fa-sticky-note" aria-hidden="true"></i>
+		g_note.btn = $(`<button class="btn ml-5" data-action="toTab,note"><i class="fa fa-sticky-note" aria-hidden="true"></i>
 	            <span class="badge badge-primary badge-pill position-absolute hide"></span>
 	        </button>
 			`).insertAfter('[data-action="fullContnet"]');

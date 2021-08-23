@@ -34,9 +34,12 @@ var g_dot = {
 		});
 		registerAction('dot_apply', (dom, action, params) => {
 				var text = g_dot.getText();
-				g_dot.dot.attr('data-text', text).attr('title', text);
+				if(g_dot.dot.attr('data-isnew') || text != g_dot.dot.attr('data-text')){
+					g_dot.dot.attr('data-isnew', null);
+					g_dot.dot.attr('data-text', text).attr('title', text);
+					queryMsg({type: 'dot_apply', md5: g_dot.md5, text: text, key: g_dot.key}, true);
+				}
 				g_dot.hide();
-				queryMsg({type: 'dot_apply', md5: g_dot.md5, text: text, key: g_dot.key}, true);
 		});
 		registerAction('mark_switch', (dom, action, params) => {
 			var i = $(dom).find('i');
@@ -94,7 +97,7 @@ var g_dot = {
 
 		registerRevice('comments_get', (data) => {
 			$('.img-mark-dots').remove();
-			g_dot.setPill(data.md5, Object.keys(data.comments).length);
+			//g_dot.setPill(data.md5, Object.keys(data.comments).length);
 			for(var key in data.comments){
 					var p = key.split('_');
 					g_dot.new(p[0], p[1], data.md5, data.comments[key]);
@@ -112,13 +115,14 @@ var g_dot = {
 			g_dot.setPill(data.md5, data.cnts);
 		});
 	},
-	new: (x, y, md5, data, click) => {
+	new: (x, y, md5, data, isNew) => {
 		data = Object.assign({text: '', user: me(), time: new Date().getTime()}, data);
     var dot = $(`<span class='img-mark-dots' title="`+data.text+`" data-text="`+data.text+`" data-md5="`+md5+`" data-user="`+data.user+`" data-dot="`+(x+'_'+y)+`" style="left: `+x+`%;top:`+y+`%;background-image: url(res/`+data.user+`.jpg)" data-action="dot_click"></span>`).appendTo('#modal-img-div');
-    if(click) dot.click();
+    if(isNew){
+    	dot.attr('data-isnew', 1).click();
+    }
 	},
 	setPill: (md5, cnt) => {
-
 		// 这里把历史消息有上传了但没有标记的图片做标记
 		// if ($('#modal-img').hasClass('show') && $('#modal-img').attr('data-md5') == md5) {
 		// 	$('[data-action=mark_switch]').toggleClass('hide', !saved);

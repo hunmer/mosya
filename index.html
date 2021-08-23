@@ -543,13 +543,12 @@
                                     <i class="fa fa-external-link-square" aria-hidden="true"></i>
                                 </button>
                                 <div class="btn-group mx-auto" role="group">
-                                    <button class="btn btn-primary" type="button" data-btn="btn_videoHistory" data-action="tosubTab,video,videoHistory">履歴
+                                    <!-- button class="btn btn-primary" type="button" data-btn="btn_videoHistory" data-action="tosubTab,video,videoHistory">履歴
                                         <span class="badge badge-danger badge-pill hide" data-clickHide=1></span>
                                     </button>
-                                    <!--  data-action="tosubTab,video,videoNote" -->
                                     <button class="btn" type="button" data-btn="btn_videoNote">メモ
                                         <span class="badge badge-danger badge-pill hide"></span>
-                                    </button>
+                                    </button> -->
                                     <button class="btn btn-dark" data-action="video_set">
                                         <i class="fa fa-youtube-play" aria-hidden="true"></i>
                                     </button>
@@ -561,7 +560,7 @@
                         </div>
                         <div id='subContent_video' style="width: 100%;">
                             <div class="subContent" id='subContent_videoHistory'>
-                                <table class="table table-striped">
+                                <!-- <table class="table table-striped">
                                     <thead>
                                         <tr>
                                             <th>#</th>
@@ -570,19 +569,7 @@
                                             <th class="text-right">発信</th>
                                         </tr>
                                     </thead>
-                                    <!-- <tbody data-action="playVideo" data-vid="kzZ6KXDM1RI">
-                                         <tr>
-                                       <th>
-                                          <img src="res/demo.jpg" class="cover" alt="maki">
-                                      </th>
-                                      <td>test</td>
-                                      <th>
-                                          <img src="res/maki.jpg" class="img-fluid rounded-circle user-icon" alt="maki">
-                                      </th>
-                                      <td class="text-right">20:17</td>
-                                    </tr>
-                                    </tbody> -->
-                                </table>
+                                </table> -->
                             </div>
                         </div>
                     </div>
@@ -633,7 +620,7 @@
                 <div id="bottom_video" class="row toolbar hide" style="width: 100%;">
                 </div>
                 <div id="bottom_lab" class="row toolbar hide" style="width: 100%;">
-                    <div class="row w-full text-center">
+                    <div class="row w-full text-center toolbar" id='bottom_pose'>
                         <button class="btn col-2" data-action="pose_selectd">0</button>
                         <button class="btn col-2" data-action="pose_selectAll">
                             <i class="fa fa-check-square-o" aria-hidden="true"></i>

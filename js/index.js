@@ -10,10 +10,8 @@ var g_imageHost = 'https://mosya-server.glitch.me/';
 var g_api = 'https://neysummer-api.glitch.me/';
 var g_test = 1;
 
-// var socket_url = 'ws://127.0.0.1:8000';
 // var socket_url = 'ws://192.168.31.209:8000';
 // var g_api = 'api/';
-// var g_imageHost = 'http://127.0.0.1/mosya-websocket/';
 // var g_imageHost = 'http://192.168.31.209/mosya-websocket/';
 
 var g_cache = {
@@ -572,7 +570,6 @@ function queryPlaylist(id){
     });
 }
 var g_actions = {};
-
 function registerAction(name, callback){
     g_actions[name] = callback;
 }
@@ -584,18 +581,17 @@ function doAction(dom, action, params) {
     }
     switch (action[0]) {
         case 'player_embed':
-            // https://open.spotify.com/playlist/71j4gz1VqJ3a6LGCVpQsYX
-            var url = prompt('embed url', g_test ? 'https://open.spotify.com/playlist/71j4gz1VqJ3a6LGCVpQsYX' : '');
+            var url = prompt('embed url',  $('#iframe_music').attr('src') || g_test ?'https://open.spotify.com/playlist/71j4gz1VqJ3a6LGCVpQsYX' : '');
             if(url != undefined && url.length){
                 if(url.indexOf('open.spotify.com') != -1){
                     var id = cutString(url + '&', 'open.spotify.com/playlist/', '&');
                     if(!id.length) return;
-                    url = '//open.spotify.com/embed/playlist/'+id+'?theme=0';
+                    url = 'https://open.spotify.com/embed/playlist/'+id+'?theme=0';
                 }else
                 if(url.indexOf('music.163.com') != -1){
                     var id = cutString(url + '&', 'playlist?id=', '&');
                     if(!id.length) return;
-                    url = '//music.163.com/outchain/player?type=0&id='+id+'&auto=1';
+                    url = 'https://music.163.com/outchain/player?type=0&id='+id+'&auto=1';
                 }else{
                     alert('not supported now');
                     return;
@@ -1374,12 +1370,12 @@ function doAction(dom, action, params) {
                 // 获取评论
                 queryMsg({type: 'comments_get', md5: m});
             }
-            $('[data-action=mark_switch]').toggleClass('hide', !saved);
+            $('[data-action=mark_switch]').removeClass('btn-success').addClass('btn-secondary').toggleClass('hide', !saved).find('i').attr('class', 'fa fa-pencil');
             $('[data-action="downloadImageToServer"]').css('display', dom.src.indexOf('data:image/') == -1 || saved ? 'none' : '');
 
             $('#modal-img .modal-title').html(dom.alt);
              $('#modal-img').attr('data-md5', m).attr('data-user', $(dom).attr('data-user')).
-             find('img').attr('src', '').attr('src', dom.src);
+             find('img').attr('src', '').attr('src', $(dom).attr('data-src') || dom.src);
 
             halfmoon.toggleModal('modal-img');
             break;
@@ -1459,7 +1455,7 @@ function doAction(dom, action, params) {
             var toolbar = action.length > 3 ? action[3] : action[2];
             for (var con of $('.toolbar')) {
                 if (con.id == 'bottom_' + toolbar && $(con).html() != '') {
-                    $(con).show();
+                    $(con).show().parent().show();
                 } else {
                     $(con).hide();
                 }
@@ -1614,7 +1610,7 @@ function initWebsock() {
         queryMsg({ type: 'login', user: g_config.user , pc: IsPC()});
         if(!g_cache.logined){
             // queryMsg({ type: 'pics_datas' });
-            queryMsg({ type: 'history_message' });
+            // queryMsg({ type: 'history_message' });
         }
         g_cache.logined = true;
         socketTest();
@@ -1747,8 +1743,7 @@ function reviceMsg(data) {
             });
             $('#content_music table, #bottom_music .row').hide();
             _audio.pause();
-            $('#iframe_music').css('height', window.outerHeight-$('#iframe_music').offset().top+'px').html(`
-                <iframe src="`+data.url+`" width="100%" height="100%" frameBorder="0" allowtransparency="true" allow="encrypted-media"></iframe>`);
+            $('#iframe_music').css('height', '200px').html(`<iframe src="`+data.url+`" width="100%" height="100%" frameBorder="0" allowtransparency="true" allow="encrypted-media"></iframe>`);
             break;
         case 'pose_list':
             parsePoseData(data.data, data.time, false);
@@ -1820,7 +1815,7 @@ function reviceMsg(data) {
             }
             for (var key in data.data) {
                 var detail = data.data[key];
-                h += `<div class="div-photo" data-md5="` + key + `"><h6 class="text-center">` + getFormatedTime(1, new Date(detail.time)) + ' (' + detail.user + `)</h6><img data-md5="` + key + `" data-action="previewImage" src="` + g_imageHost + `saves/_` + key + `.jpg" class="serverImg" alt="` + detail.user + `">`;
+                h += `<div class="div-photo" data-md5="` + key + `"><h6 class="text-center">` + getFormatedTime(1, new Date(detail.time)) + ' (' + detail.user + `)</h6><img data-md5="` + key + `" data-action="previewImage" src="` + g_imageHost + `saves/_` + key + `.jpg" data-src="` + g_imageHost + `saves/` + key + `.jpg" class="serverImg" alt="` + detail.user + `">`;
                 if (g_config.user.name == 'maki') {
                     h += `<a  class="btn btn-square btn-danger rounded-circle" data-action="deleteServerImage" role="button"><i class="fa fa-trash-o" aria-hidden="true"></i></a> 
                     `;

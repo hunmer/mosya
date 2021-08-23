@@ -1,13 +1,13 @@
 var g_3d = {
 	init: () => {
-		g_note.btn = $(`
+		g_3d.btn = $(`
 			<button class="btn btn-primary" data-btn="btn_3d" type="button" data-action="tosubTab,lab,3d"><i class="fa fa-cube" aria-hidden="true"></i></button>
 			`).appendTo('#content_lab .btn-group');
-		g_note.tab = $(`
+		g_3d.tab = $(`
 			<div class="row mt-10 subContent " id='subContent_3d'>
 					<div id="3d" class="w-full"></div>
 			</div>`).appendTo('#subContent_lab');
-		g_note_bottom = $(`
+		g_3d.bottom = $(`
 				<div id="bottom_3d" class="row toolbar hide" style="width: 100%;">`+(1 || g_config.user.name == 'maki' ? `
 						<div class="row w-full" style="display: flow-root;">
 							<i data-action="3d_new" class="fa fa-plus col-1" aria-hidden="true"></i>
@@ -18,7 +18,7 @@ var g_3d = {
                       <div class="row w-full mt-10">
                           <div class="form-group w-full">
                               <label>通常</label>
-                              <select class="form-control col-12" onchange="g_3d.load(this.value);" >
+                              <select class="form-control col-12" onchange="g_3d.load(this.value, true);" >
                                   <option value="assets/obj/Cube N230215.3DS">方块</option>
                                   <option value="assets/obj/上半身-女性.obj">上半身-女性</option>
                                   <option value="assets/obj/头颅.3ds">头颅</option>
@@ -34,7 +34,7 @@ var g_3d = {
                   </div>
 	              </div>
 	            </div>
-							<i onclick="$('#3d iframe').attr('src', $('#3d iframe').attr('src'))" class="fa fa-refresh col-1" aria-hidden="true"></i>
+							<i onclick="$('#3d iframe')[0].src = $('#3d iframe').attr('src')" class="fa fa-refresh col-1" aria-hidden="true"></i>
 						</div>
 					` : '')+`</div>
 			`).prependTo('.navbar-fixed-bottom .container-fluid');

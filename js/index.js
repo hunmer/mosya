@@ -836,6 +836,7 @@ function doAction(dom, action, params) {
             g_config.bg = bg;
             g_config.blur = $('#bg_blur').val();
             g_config.tts = $('#checkbox_tts').prop('checked');
+            g_config.fixInput = $('#checkbox_fixInput').prop('checked');
             local_saveJson('config', g_config);
             halfmoon.toggleModal('modal-custom');
             break;
@@ -897,6 +898,10 @@ function doAction(dom, action, params) {
                             <input type="checkbox" id="checkbox_tts" value="">
                             <label for="checkbox_tts">音読</label>
                         </div>
+                        <div class="custom-switch col-4 mt-10">
+                            <input type="checkbox" id="checkbox_fixInput" value="">
+                            <label for="checkbox_fixInput">入力修復</label>
+                        </div>
                         
                         <button class="btn btn-primary btn-block mt-10" id="btn_upload" data-action="saveSetting">保存</button>
                 `);
@@ -909,6 +914,7 @@ function doAction(dom, action, params) {
                 $('option[value="' + g_config.bg + '"]').prop('selected', true);
             }
             $('#checkbox_tts').prop('checked', g_config.tts);
+            $('#checkbox_fixInput').prop('checked', g_config.fixInput);
             break;
         case 'openViewer':
             hideSidebar();
@@ -1368,6 +1374,7 @@ function doAction(dom, action, params) {
             var m = $(dom).attr('data-md5');
             if(m){
                 // 获取评论
+                $('.img-mark-dots').remove();
                 queryMsg({type: 'comments_get', md5: m});
             }
             $('[data-action=mark_switch]').removeClass('btn-success').addClass('btn-secondary').toggleClass('hide', !saved).find('i').attr('class', 'fa fa-pencil');

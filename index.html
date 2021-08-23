@@ -212,7 +212,7 @@
                     <tbody>
                         <tr>
                             <td>
-                                <img data-action="previewImage" src="res/maki.jpg" class="w-50 h-50 d-flex align-items-center rounded-circle" alt="user">
+                                <img onclick="initWebsock()" src="res/maki.jpg" class="w-50 h-50 d-flex align-items-center rounded-circle" alt="user">
                             </td>
                             <td class="pl-20">
                                 <h4 class="alert-heading mb-5">maki</h4>
@@ -594,7 +594,7 @@
                             <i data-action="show_recorder" class="fa fa-microphone font-size-18 hide" aria-hidden="true"></i>
                         </div>
                         <i data-action="show_stricker" class="fa fa-smile-o font-size-18 col-1" aria-hidden="true"></i>
-                        <input type="text" id='msg' class="form-control col-6" placeholder="ここで入力する..." onkeydown="if(event.keyCode == 13) doAction(null, 'sendMsg')" style="background-color: unset;border: unset;    padding-right: 35px;" oninput="checkStrickerTags(this)">
+                        <input type="text" id='msg' class="form-control col-6" placeholder="ここで入力する..." onkeydown="if(event.keyCode == 13) doAction(null, 'sendMsg')" style="background-color: unset;border: unset;    padding-right: 35px;" oninput="checkStrickerTags(this)" onclick="if(g_config.fixInput){getTextWithPrompt(event, 'メッセージ')};">
 
                         <div class="dropdown dropup"  style="transform: translate(-150%,0);">
                             <i data-toggle="dropdown" class="fa fa-comments-o font-size-18 col-1 text-left" aria-hidden="true"></i>

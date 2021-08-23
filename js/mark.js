@@ -17,7 +17,7 @@ var g_dot = {
 	init: () => {
 		g_dot.div = $(`
 			<div class="bg-dark-light text-light row position-fixed p-5 border rounded w-200" style="z-index: 99999;display: none;">
-				<textarea class="form-control col-12" placeholder="input"></textarea>
+				<textarea class="form-control col-12" placeholder="コメントを書く..." onclick="getTextWithPrompt(event, 'コメント')"></textarea>
 				<div class="btn-group col-12 mt-5">
 					<button data-action="dot_delete" class="btn col"><i class="fa fa-trash-o" aria-hidden="true"></i></button>
 					<button data-action="dot_apply" class="btn col"><i class="fa fa-check" aria-hidden="true"></i></button>
@@ -28,8 +28,9 @@ var g_dot = {
 			if(!g_dot.md5) return;
 
 			if(confirm('削除してもいいですか？?')){
-				queryMsg({type: 'dot_delete', md5: g_dot.md5, key: g_dot.key}, true);
+				g_dot.dot.attr('data-text',null);
 				g_dot.hide();
+				queryMsg({type: 'dot_delete', md5: g_dot.md5, key: g_dot.key}, true);
 			}
 		});
 		registerAction('dot_apply', (dom, action, params) => {
@@ -96,8 +97,7 @@ var g_dot = {
 		});
 
 		registerRevice('comments_get', (data) => {
-			$('.img-mark-dots').remove();
-			//g_dot.setPill(data.md5, Object.keys(data.comments).length);
+			g_dot.setPill(data.md5, Object.keys(data.comments).length, false);
 			for(var key in data.comments){
 					var p = key.split('_');
 					g_dot.new(p[0], p[1], data.md5, data.comments[key]);
@@ -122,7 +122,7 @@ var g_dot = {
     	dot.attr('data-isnew', 1).click();
     }
 	},
-	setPill: (md5, cnt) => {
+	setPill: (md5, cnt, create = true) => {
 		// 这里把历史消息有上传了但没有标记的图片做标记
 		// if ($('#modal-img').hasClass('show') && $('#modal-img').attr('data-md5') == md5) {
 		// 	$('[data-action=mark_switch]').toggleClass('hide', !saved);
@@ -130,6 +130,7 @@ var g_dot = {
 
 		var img = $('#content_chat img[data-md5="'+md5+'"]');
 			if(!img.length){
+				if(!create) return;
 				img = reviceMsg({ type: 'msg', image: md5, msg: '<img class="thumb" data-md5="'+md5+'" data-user="'+me()+'" data-action="previewImage" src="' + g_imageHost + 'saves/_' + md5 + '.jpg" alt="Comment by ' + me() + '"><a  class="btn btn-square btn-success rounded-circle saved" style="position: relative;bottom: 5px;right: 20px;" role="button"><i class="fa fa-check" aria-hidden="true"></i></a>', user: me()});
 			}
 				var dom = img.next('.mark_cnt');

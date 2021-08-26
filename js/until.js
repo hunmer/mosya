@@ -154,13 +154,13 @@ function getFormatedTime(i = 0, date = new Date()) {
 }
 
 function toastPAlert(msg, time, title, type) {
-    console.log(halfmoon.initStickyAlert({
+   halfmoon.initStickyAlert({
         content: msg,
         title: title || '',
         alertType: type || "alert-primary",
         hasDismissButton: false,
         timeShown: time || 3000
-    }));
+    });
 }
 
 function addAnimation(d, x, callback) {

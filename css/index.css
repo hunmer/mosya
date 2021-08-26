@@ -1,3 +1,4 @@
+
 .img-mark-dots {
     position: absolute;
     border-radius: 50%;
@@ -15,7 +16,6 @@
     display: inline-flex;
     align-items: center;
     height: 30px;
-    width: 120px;
     padding: 10px 0px 10px 25px;
     border-radius: 0 20px 20px 0;
 }
@@ -134,8 +134,8 @@ body {
         height: 90%;
     }
     #image {
-        position: absolute;
-        left: 0;
+        /*position: absolute;*/
+        /*left: 0;*/
         padding: 10px;
     }
     button[data-action="fullContnet"] {

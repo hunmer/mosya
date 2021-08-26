@@ -212,7 +212,7 @@
                     <tbody>
                         <tr>
                             <td>
-                                <img onclick="initWebsock()" src="res/maki.jpg" class="w-50 h-50 d-flex align-items-center rounded-circle" alt="user">
+                                <img src="res/maki.jpg" class="w-50 h-50 d-flex align-items-center rounded-circle" alt="user">
                             </td>
                             <td class="pl-20">
                                 <h4 class="alert-heading mb-5">maki</h4>
@@ -354,7 +354,7 @@
                                                         <span class="sr-only">upload</span>
                     </button>
                     <!-- <a  class="btn btn-primary" role="button">Get started</a> -->
-                    <img id='img_user' data-action="previewImage" onclick="return;location.reload();" src="res/user.jpg" class="rounded-circle user-icon" alt="user">
+                    <img id='img_user' onclick="recon()" src="res/user.jpg" class="rounded-circle user-icon" alt="user">
                     <div id='status' class="bg-dark-light"></div>
                 </div>
         </nav>
@@ -393,12 +393,12 @@
                         <a data-action="openSetting" href="javascript: void(0)" class="btn btn-square btn-primary rounded-circle btn-lg" role="button"><i class="fa fa-cog" aria-hidden="true"></i></a>
             </div>
         </div>
-        <div class="content-wrapper" style="height: 90%">
+        <div class="content-wrapper" style="height: 87%">
             <div class="container-fluid p-10" id="image_div">
                 <div id='content' style="width: 100%;text-align: center;">
                     <canvas style="border-radius: 20px;"></canvas>
-                    <div id='div_mainImg' style="max-width: 500px;margin: 0 auto;">
-                        <img id="image" data-action="openViewer" class='fullwidth animated bounceInDown' animated='bounceInDown' src="res/demo.jpg" alt="Picture" style="border-radius: 20px;">
+                    <div id='div_mainImg' style="margin: 0 auto;">
+                        <img id="image" data-action="openViewer" class='animated bounceInDown hide' animated='bounceInDown' alt="Picture" style="border-radius: 20px;">
                     </div>
                 </div>
             </div>
@@ -534,7 +534,7 @@
                 <div id='content_video' class='_content hide'>
                     <div class="row">
                         <div class="col-12" style="height: 250px;">
-                            <iframe style="width: 100%;height: 100%;display: none;border: unset;"></iframe>
+                            <iframe style="width: 100%;height: 100%;display: none;border: unset;" allowfullscreen mozallowfullscreen="true" webkitallowfullscreen="true" allow="fullscreen; autoplay;"></iframe>
                             <video id='video' class="hide" controls autoplay></video>
                         </div>
                         <div class="col-12">

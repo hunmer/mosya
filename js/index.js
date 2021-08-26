@@ -331,6 +331,17 @@ function init() {
     $('#grid_opacity').val(g_config.grid.opacity || 1);
     $('input[type=color]').val(g_config.grid.color);
     $(window).resize((e) => {
+    	var w = $('#image').width();
+    	var mw = $('#div_mainImg').width();
+    	if(w > mw){
+    		w = mw;
+    	}else{
+    		var w = parseInt($('#image').attr('naturalWidth'));
+    		if(w > mw){
+    			w = mw;
+    		}
+    	}
+    		$('#image').width(w);
         drawBoard();
     });
     g_cache.loginTime = getNow(); 
@@ -1233,7 +1244,9 @@ function doAction(dom, action, params) {
             if (c.length) c.click();
             break;
         case 'playSong':
-            var src = g_api + 'search.php?server=youtube&type=url&id=' + $(dom).attr('data-vid');
+            g_config.lastPlay = $(dom).attr('data-vid');
+            local_saveJson('config', g_config);
+            var src = g_api + 'search.php?server=youtube&type=url&id=' + g_config.lastPlay;
             if (_audio.source != src) {
                 $('#audio_progress').css('width', '0%');
                 $('.progress-group-label').find('i').prop('class', 'fa fa-spinner text-primary font-size-16');
@@ -1367,14 +1380,15 @@ function doAction(dom, action, params) {
                 }
             }
 
-            var saved = $(dom).next('.saved').length || $(dom).hasClass('serverImg'); // 是否在服务器上存在
+            var saved = $(dom).parent().find('.saved').length || $(dom).hasClass('serverImg') || $(dom).parent().find('.mark_cnt').length; // 是否在服务器上存在
             var m = $(dom).attr('data-md5');
             if(m){
                 // 获取评论
                 $('.img-mark-dots').remove();
                 queryMsg({type: 'comments_get', md5: m});
             }
-            $('[data-action=mark_switch]').removeClass('btn-success').addClass('btn-secondary').toggleClass('hide', !saved).find('i').attr('class', 'fa fa-pencil');
+            g_dot.setSwitchDisplay(saved);
+
             $('[data-action="downloadImageToServer"]').css('display', dom.src.indexOf('data:image/') == -1 || saved ? 'none' : '');
 
             $('#modal-img .modal-title').html(dom.alt);
@@ -1607,7 +1621,12 @@ function recon() {
 
 
 function initWebsock() {
-    if (connection != undefined) connection.close();
+	console.log(connection);
+    if (connection != undefined){
+    	connection.close(); // 这个是异步函数,交给Onclose处理
+    	connection = undefined;
+    	return;
+    }
     connection = new WebSocket(socket_url);
     connection.onopen = () => {
         $('#status').attr('class', 'bg-success');
@@ -1642,7 +1661,7 @@ function parseMusiclist(data) {
                 </tr>
                 </tbody>`
     }
-    $('#content_music table').html(h).find('tbody:eq(0)').click();
+    var con = $('#content_music table').html(h).find('tbody' + g_config.lastPlay ? '[data-vid="'+g_config.lastPlay+'"]' : ':eq(0)').click()
     closeModal('modal-custom', 'music', () => {
         $('#modal-custom .modal-html').html($('#content_music').html());
     });
@@ -1651,6 +1670,7 @@ function parseMusiclist(data) {
 var g_canva = $('canvas');
 
 function drawBoard() {
+	if($('#image').css('display') == 'none') return;
     var context = g_canva.get(0).getContext("2d");
     g_canva[0].height = context.height; // 清除画布
     if (!g_config.grid.enable) {
@@ -1743,7 +1763,7 @@ function reviceMsg(data) {
             });
             $('#content_music table, #bottom_music .row').hide();
             _audio.pause();
-            $('#iframe_music').css('height', '200px').html(`<iframe src="`+data.url+`" width="100%" height="100%" frameBorder="0" allowtransparency="true" allow="encrypted-media"></iframe>`);
+            $('#iframe_music').css('height', '500px').html(`<iframe src="`+data.url+`" width="100%" height="100%" frameBorder="0" allowtransparency="true" allow="encrypted-media"></iframe>`);
             break;
         case 'pose_list':
             parsePoseData(data.data, data.time, false);
@@ -1932,7 +1952,7 @@ function reviceMsg(data) {
             toastPAlert(data.msg, data.time, data.title, data.msgType);
             break;
         case 'save':
-            var img = $('[data-md5="' + data.data + '"]');
+            var img = $('#content_chat [data-md5="' + data.data + '"]');
             if (img.length && !img.parent().find('.saved').length) {
                 $(`<a  class="btn btn-square btn-success rounded-circle saved" style="position: relative;bottom: 5px;right: 20px;" role="button"><i class="fa fa-check" aria-hidden="true"></i></a> 
                 `).insertAfter(img);
@@ -2107,9 +2127,25 @@ function parsePost(data, save = true) {
 }
 
 function loadImage(src, anime = true, dsrc = ''){
-    imagesLoaded($('#image').attr('src', src)).on('progress', function(instance, image) {
+	var img = new Image();
+	img.src = src;
+	// 
+    imagesLoaded(img).on('progress', function(instance, image) {
         if (image.isLoaded) {
-            $('#div_mainImg').height($('#image').height());
+        		var w = image.img.width;
+        		var h = image.img.height;
+        		var data = {
+        			src: src,
+        			naturalWidth: w,
+        			naturalHeight: h,
+        		}
+        		var mx = $('#div_mainImg').width();
+        		console.log(w, mx);
+        		if(w > mx){
+        			w = mx;
+        		}
+        		$('#image').attr(data).width(w).show();
+            // $('#div_mainImg').height($('#image').height());
             setTimeout(() => {drawBoard()}, 1500);
         }else
         if(dsrc){

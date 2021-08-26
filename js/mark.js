@@ -104,6 +104,11 @@ var g_dot = {
 
 		if(!g_dot.gallery){
 				registerRevice('comments_get', (data) => {
+					var showing = $('#modal-img').hasClass('show') && $('#modal-img').attr('data-md5') == data.md5;
+				if(showing){
+					g_dot.setSwitchDisplay(true);
+					$('[data-action="downloadImageToServer"]').hide();
+				}
 				g_dot.setPill(data.md5, Object.keys(data.comments).length, false);
 				for(var key in data.comments){
 						var p = key.split('_');
@@ -122,6 +127,15 @@ var g_dot = {
 			}
 			g_dot.setPill(data.md5, data.cnts);
 		});
+	},
+	setSwitchDisplay: (show) => {
+		var mark = $('[data-action=mark_switch]').removeClass('btn-success').addClass('btn-secondary');
+    if(show){
+    	mark.removeClass('hide');
+    }else{
+    	mark.addClass('hide');
+    }
+    mark.find('i').attr('class', 'fa fa-pencil');
 	},
 	new: (x, y, md5, data, isNew) => {
 		data = Object.assign({text: '', user: me(), time: new Date().getTime()}, data);
@@ -156,13 +170,19 @@ var g_dot = {
 		var dom = img.next('.mark_cnt');
 		if(!dom.length){
 			if(cnt == 0) return;
-			dom = $(`<a class="btn btn-square rounded-circle btn-secondary mark_cnt" style="position: absolute;top: 16px;left: 16px;" role="button"></a> `).insertAfter(img);
+			var i = g_dot.gallery ? '16px' : '5px';
+			dom = $(`<a class="btn btn-square rounded-circle btn-secondary mark_cnt" style="position: absolute;top: `+i+`;left: `+i+`;" role="button"></a> `).insertAfter(img);
 		}
 		if(cnt == 0){
 			dom.remove();
 		}else{
 			dom.html(cnt);
-			addAnimation(img, 'heartBeat');					
+			addAnimation(img, 'heartBeat');
+
+			if(!img.parent().find('.saved').length){
+				$(`<a  class="btn btn-square btn-success rounded-circle saved" style="position: relative;bottom: 5px;right: 20px;" role="button"><i class="fa fa-check" aria-hidden="true"></i></a> 
+                `).insertAfter(img);
+			}	
 		}
 	}
 }

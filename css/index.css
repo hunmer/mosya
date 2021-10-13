@@ -62,11 +62,7 @@
     color: var(--dm-base-text-color);
 }
 
-@font-face {
-    font-family: janFont;
-    src: url(../fonts/KosugiMaru-Regular.ttf);
-}
-/*background-color: #1d2023;*/
+
 :root {
     /*--dm-navbar-bg-color: unset;*/
     /*--lm-base-body-bg-image: linear-gradient(rgb(35 35 35 / 50%), rgb(111 111 111)),url(../res/bg.jpg),url(../res/bg.jpg);*/
@@ -101,6 +97,11 @@ li {
         -webkit-transform:rotate(360deg);     
     }     
 }     
+
+@font-face {
+    font-family: janFont;
+    src: url(../fonts/KosugiMaru-Regular.ttf);
+}
 
 body {
     color: var(--lm-base-text-color);
@@ -302,19 +303,22 @@ body {
     bottom: 0;
 }
 
+#sidebar_icons_float a {
+    margin-bottom: 10px;
+}
+
+
 #modal_icons_float {
     position: absolute;
     right: 7%;
     bottom: 2%;
 }
 
-#sidebar_icons_float a {
-    margin-bottom: 10px;
-}
 
 #modal_icons_float a {
     margin-bottom: 10px;
 }
+
 
 .thumb {
     width: 150px;

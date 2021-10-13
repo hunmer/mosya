@@ -3,7 +3,7 @@ String.prototype.replaceAll = function(s1, s2) {
 }
 
 var _GET = getGETArray();
-var g_localKey = 'mosya_';
+var g_localKey = 'koekoe_';
 // 本地储存前缀
 var g_config = local_readJson('config', {
     bg: undefined,

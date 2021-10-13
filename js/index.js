@@ -1246,7 +1246,8 @@ function doAction(dom, action, params) {
         case 'playSong':
             g_config.lastPlay = $(dom).attr('data-vid');
             local_saveJson('config', g_config);
-            var src = g_api + 'search.php?server=youtube&type=url&id=' + g_config.lastPlay;
+            // var src = g_api + 'search.php?server=youtube&type=url&id=' + g_config.lastPlay;
+            var src = 'https://alltubedownload.net/download?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D'+g_config.lastPlay+'&format=249'
             if (_audio.source != src) {
                 $('#audio_progress').css('width', '0%');
                 $('.progress-group-label').find('i').prop('class', 'fa fa-spinner text-primary font-size-16');
@@ -1621,7 +1622,6 @@ function recon() {
 
 
 function initWebsock() {
-	console.log(connection);
     if (connection != undefined){
     	connection.close(); // 这个是异步函数,交给Onclose处理
     	connection = undefined;

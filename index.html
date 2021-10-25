@@ -96,9 +96,10 @@
             <div id='modal_icons_float'>
                 <div class="row mx-auto" style="width: 20%;">
                     <div class="col-md-6">
-                        <a data-action="mark_switch" href="javascript:void(0)" class="btn btn-square btn-secondary rounded-circle btn-lg hide" role="button"><i class="fa fa-pencil" aria-hidden="true"></i></a>
-                        <a data-action="downloadImageToServer" href="javascript:void(0)" class="btn btn-square btn-success rounded-circle btn-lg" role="button"><i class="fa fa-upload" aria-hidden="true"></i></a>
-                        <a data-action="downloadImage" href="javascript:void(0)" class="btn btn-square btn-primary rounded-circle btn-lg" role="button"><i class="fa fa-download" aria-hidden="true"></i></a>
+                        <a data-action="openViewerFromModal"  class="btn btn-square btn-secondary rounded-circle btn-lg" role="button"><i class="fa fa-arrows-alt" aria-hidden="true"></i></a>
+                        <a data-action="mark_switch"  class="btn btn-square btn-secondary rounded-circle btn-lg hide" role="button"><i class="fa fa-pencil" aria-hidden="true"></i></a>
+                        <a data-action="downloadImageToServer"  class="btn btn-square btn-success rounded-circle btn-lg" role="button"><i class="fa fa-upload" aria-hidden="true"></i></a>
+                        <a data-action="downloadImage"  class="btn btn-square btn-primary rounded-circle btn-lg" role="button"><i class="fa fa-download" aria-hidden="true"></i></a>
                     </div>
                 </div>
             </div>
@@ -690,6 +691,7 @@
     <script src="js/tip.js"></script>
     <script src="js/3d.js"></script>
     <script src="js/mark.js"></script>
+    <script src="js/collection.js"></script>
     <script type="text/javascript">
     function toastAlert() {
         var alertContent = "This is a default alert with <a href='#' class='alert-link'>a link</a> being toasted.";

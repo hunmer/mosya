@@ -10,9 +10,9 @@ var g_imageHost = 'https://mosya-server.glitch.me/';
 var g_api = 'https://neysummer-api.glitch.me/';
 var g_test = 1;
 
-// var socket_url = 'ws://192.168.31.209:8000';
+// var socket_url = 'ws://'+location.host+':8000';
 // var g_api = 'api/';
-// var g_imageHost = 'http://192.168.31.209/mosya-websocket/';
+// var g_imageHost = 'http://'+location.host+'/mosya-websocket/';
 
 var g_cache = {
     logined: false,
@@ -203,6 +203,12 @@ function init() {
     _record.onended = () => {
         _audio.volume = 1;
     }
+
+     setInterval(() => {
+        if(connection.readyState != 1){
+            recon();
+            }
+    }, 3000);
 
     setInterval(() => {
         var skip = true;
@@ -426,7 +432,7 @@ function uploadImage(btn) {
         title: $('#upload_title').val(),
         img: img.src,
     }
-    queryMsg({ type: 'post', data: g_cache.post });
+    queryMsg({ type: 'post', data: g_cache.post , collection:  g_cache.uploadImageToCollection });
 }
 
 function selectTime(dom) {
@@ -925,9 +931,10 @@ function doAction(dom, action, params) {
             $('#checkbox_fixInput').prop('checked', g_config.fixInput);
             break;
         case 'openViewer':
+        case 'openViewerFromModal':
             hideSidebar();
             if (_viewer != undefined) _viewer.destroy();
-            _viewer = new Viewer(dom, {
+            _viewer = new Viewer(action[0] == 'openViewerFromModal' ? $(dom).parents('.modal-dialog').find('img')[0] : dom, {
                 backdrop: 'static',
                 navbar: 0,
                 title: 0,
@@ -936,6 +943,10 @@ function doAction(dom, action, params) {
                     return image.src.replace('saves/_', 'saves/');
                   },
             });
+              closeModal('modal-img', '', () => {
+                    halfmoon.toggleModal('modal-img');
+                })
+
             _viewer.show();
             break;
         case 'imageHistory_toDay':
@@ -1410,6 +1421,10 @@ function doAction(dom, action, params) {
             }
             break;
         case 'upload':
+        case 'uploadImageToCollection':
+            g_cache.uploadImageToCollection = action[0] == 'uploadImageToCollection' ?  g_collection.getSelected() : null;
+
+            $('#select-time').parents('.form-group').css('display',  g_cache.uploadImageToCollection != null ? 'none' : '');
             $($('select').parents('.form-group')[0]).removeClass('is-invalid');
             $('[data-action="addTime"]').css('display', g_cache.post == undefined ? 'none' : 'unset');
             halfmoon.toggleModal('modal-upload');
@@ -1614,18 +1629,20 @@ var connection;
 
 
 function recon() {
+    console.log('recon');
     $('#status').attr('class', 'bg-dark-light');
-    if (g_cache.logined) {
+   // if (g_cache.logined) {
         initWebsock();
-    }
+    //}
 }
 
 
 function initWebsock() {
+
     if (connection != undefined){
     	connection.close(); // 这个是异步函数,交给Onclose处理
     	connection = undefined;
-    	return;
+    	// return;
     }
     connection = new WebSocket(socket_url);
     connection.onopen = () => {
@@ -1639,13 +1656,11 @@ function initWebsock() {
         socketTest();
     }
 
-    connection.onclose = () => {
-        recon();
-    }
-
     connection.onmessage = (e) => {
         reviceMsg(JSON.parse(e.data));
     }
+
+
 }
 
 function parseMusiclist(data) {
@@ -2434,6 +2449,8 @@ function initSetting(){
 
 function socketTest() {
     queryMsg({ type: 'online' });
+        queryMsg({type: 'collction_list'});
+    
 }
 
 function sendMsg(msg){

@@ -95,6 +95,22 @@ function _s2(s, j = '') {
 function _s(i, j = '') {
     return (i < 10 ? '0' + i : i) + j;
 }
+function loadJs(file, success = function() {}, fail = function() {}) {
+    var D = document;
+    var scriptNode = D.createElement('script');
+    scriptNode.type = "text/javascript";
+    scriptNode.src = file;
+    var targ = D.getElementsByTagName('head')[0] || D.body || D.documentElement;
+    targ.appendChild(scriptNode);
+    scriptNode.onload = function() {
+        success();
+    }
+    scriptNode.onerror = function() {
+        fail();
+    }
+    return scriptNode;
+}
+
 
 function getTime(s) {
     s = Number(s);

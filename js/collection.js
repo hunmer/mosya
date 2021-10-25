@@ -150,7 +150,7 @@ var g_collection = {
             g_collection.initHtml(data.data);
         });
 
-        doAction(null, 'toTab,collection');
+        //doAction(null, 'toTab,collection');
 
     },
 

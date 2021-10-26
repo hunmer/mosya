@@ -9,12 +9,12 @@ var g_collection = {
         g_collection.btn = $(`<button class="btn ml-5" data-action="toTab,collection"><i class="fa fa-file-image-o" aria-hidden="true"></i>
 	            <span class="badge badge-primary badge-pill position-absolute hide"></span>
 	        </button>
-			`).insertAfter('#btns_tabs');
+			`).prependTo('#tabs');
         g_collection.tab = $(`
 			<div id='content_collection' class='_content hide p-5'>
 				<div class="w-full row mx-auto">
 					<select class="form-control" onchange="g_collection.showCollection(this.value)">
-						<option value="" selected disabled>select name</option>
+						<option value="" selected disabled>アルバムを選択</option>
 					</select>
 				</div>
 				<div class="grid mt-10">
@@ -25,7 +25,7 @@ var g_collection = {
         g_collection.bottom = $(`
 					<div id="bottom_collection" class="row toolbar hide" style="width: 100%;">
 							<div class="row w-full" style="display: flow-root;">
-                                <i data-action="collection_upload" class="fa fa-plus col-1" aria-hidden="true"></i>
+                                <i data-action="collection_new" class="fa fa-plus col-1" aria-hidden="true"></i>
                                 <i data-action="uploadImageToCollection" class="fa fa-file-image-o col-1" aria-hidden="true"></i>
 								<i data-action="collection_delete" class="fa fa-trash-o col-1" aria-hidden="true"></i>
 							</div>
@@ -63,40 +63,23 @@ var g_collection = {
             }
         });
 
-        registerAction('collection_upload', (dom, action, params) => {
-            var collection = g_collection.getSelected();
-            if(collection == null){
-                var name = prompt('input name', '');
-                if (name != undefined && name.length) {
-                     queryMsg({ type: 'collction_new', collection: name });
-                 }
-
-            }else{
-                var url = prompt('input url', 'http://127.0.0.1/mosya/res/スター.jpg');
-                if (url != undefined && url.length) {
-                    queryMsg({
-                        type: 'collection_upload',
-                        data: {
-                            collection: collection,
-                            url: url,
-                            title: '',
-                        }
-                    });
-                }
-            }
-            
+        registerAction('collection_new', (dom, action, params) => {
+             var name = prompt('アルバムの名前を入力してください', '');
+            if (name != undefined && name.length) {
+                 queryMsg({ type: 'collction_new', collection: name });
+             }
         });
 
         registerAction('collction_photo_actions', (dom, action, params) => {
             var div = $(dom).parents('.grid-item');
             var time = div.attr('data-time');
-            $('#modal-custom').find('.modal-title').html('actions');
+            $('#modal-custom').find('.modal-title').html('操作');
             $('#modal-custom').attr('data-type', 'collction_photo_actions').find('.modal-html').html(`
             		<div class="w-full mb-10">
             			<img src="` + div.find('img').attr('src') + `" class="h-150 mx-auto">
             		</div>
-                <button class="btn btn-block" data-action="collction_photo_action,share,` + time + `">share</button>
-                <button class="btn btn-block btn-danger" data-action="collction_photo_action,delete,` + time + `">delete</button>
+                <button class="btn btn-block" data-action="collction_photo_action,share,` + time + `">シェア</button>
+                <button class="btn btn-block btn-danger" data-action="collction_photo_action,delete,` + time + `">削除</button>
                 `);
             halfmoon.toggleModal('modal-custom');
         });
@@ -203,8 +186,8 @@ var g_collection = {
     },
 
     getImageHtml: (time, d) => {
-        return `<div class="grid-item" data-time="` + time + `">
-                      <img class="photo hide"  data-action="openViewer" src="` + d.url + `" alt="` + d.title + `" title="` + d.title + `">
+        return `<div class="grid-item " data-time="` + time + `">
+                      <img class="photo"  data-action="openViewer" src="` + (d.url.substr(0, 4).toLowerCase() == 'http' ? d.url : g_imageHost + 'collection/'+d.url+'.jpg') + `" alt="` + d.title + `" title="` + d.title + `">
                         <a class="btn btn-square rounded-circle btn-primary" data-action="collction_photo_actions" style="position: absolute;bottom: 16px;right: 16px;" role="button"> <i class="fa fa-ellipsis-h" aria-hidden="true"></i></a>
                       </div>`
     },
@@ -230,7 +213,6 @@ var g_collection = {
         });
         g_collection.grid.imagesLoaded().progress(function(instance, image) {
             if (image.img.classList.contains('photo')) {
-                image.img.classList.remove('hide');
                 g_collection.grid.isotope('layout');
             }
         });

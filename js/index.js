@@ -2449,7 +2449,7 @@ function initSetting(){
 
 function socketTest() {
     queryMsg({ type: 'online' });
-        queryMsg({type: 'collction_list'});
+        // queryMsg({type: 'collction_list'});
     
 }
 

@@ -1464,6 +1464,11 @@ function doAction(dom, action, params) {
                     g_cache.unread = 0;
                     $('#unread').hide();
                     break;
+
+                case 'collection':
+        queryMsg({type: 'collction_list'});
+                    
+                    break;
             }
             break;
 

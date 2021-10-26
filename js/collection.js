@@ -27,7 +27,8 @@ var g_collection = {
 							<div class="row w-full" style="display: flow-root;">
                                 <i data-action="collection_new" class="fa fa-plus col-1" aria-hidden="true"></i>
                                 <i data-action="uploadImageToCollection" class="fa fa-file-image-o col-1" aria-hidden="true"></i>
-								<i data-action="collection_delete" class="fa fa-trash-o col-1" aria-hidden="true"></i>
+                                <i data-action="collection_delete" class="fa fa-trash-o col-1" aria-hidden="true"></i>
+								<i onclick="queryMsg({ type: 'collction_list' });" class="fa fa-refresh col-1" aria-hidden="true"></i>
 							</div>
 					</div>
 				`).prependTo('.navbar-fixed-bottom .container-fluid');
@@ -37,7 +38,9 @@ var g_collection = {
 
             switch(action[1]){
                 case 'share':
+                    var name = g_collection.getSelected();
                     queryMsg({ type: 'msg', msg: '<img class="thumb" data-action="previewImage" src="' +div.find('img').attr('src') + '">' }, true);
+                    queryMsg({ type: 'msg', msg: `<a href="javascript: g_collection.btn[0].click();g_collection.selectCollection('`+name+`') ">アルバム > `+name+`</a>` }, true);
                      halfmoon.toggleModal('modal-custom');
                     break;
 
@@ -98,7 +101,9 @@ var g_collection = {
         registerRevice('collection_upload', (data) => {
              if (g_collection.getSelected() == data.data.collection) {
                 var $items = $(g_collection.getImageHtml(data.time, data.data));
-                   g_collection.grid.append($items).isotope( 'prepended', $items ).isotope('layout');
+                  g_collection.grid.prepend( $items ).isotope( 'prepended', $items );
+                     g_collection.gridProgress();
+
                    closeModal('modal-upload', '', () => {
                      $('#btn_upload').html('アップロードする');
                     g_cache.upload = false;
@@ -129,7 +134,7 @@ var g_collection = {
            g_collection.selectCollection(name);
         });
         registerRevice('collction_list', (data) => {
-            console.log(data);
+            $('#content_collection select option:gt(0)').remove();
             g_collection.initHtml(data.data);
         });
 
@@ -158,7 +163,6 @@ var g_collection = {
             return;
         }
 
-        if (g_collection.grid) g_collection.grid.isotope('destroy')
 
         if (json.collection) {
             g_collection.data[json.collection] =  json.data;
@@ -170,13 +174,14 @@ var g_collection = {
                 $('#content_collection select').append('<option value="' + name + '">' + name + '</option>');
             }
             g_collection.data = json;
-            g_collection.selectCollection(Object.keys(json)[0]);
+            g_collection.selectCollection(g_config.lastCollection);
         }
 
 
     },
 
     selectCollection: (collection) => {
+
     	$('#content_collection select option[value="'+collection+'"]').prop('selected', true);
             g_collection.showCollection(collection);
 
@@ -190,6 +195,9 @@ var g_collection = {
     },
 
     showCollection: (collection) => {
+        g_config.lastCollection = collection;
+        local_saveJson('config', g_config);
+        
           if(!g_collection.loadedJs){
             g_collection.loadUntil(() => {
                 g_collection.showCollection(collection);
@@ -204,14 +212,18 @@ var g_collection = {
             h = g_collection.getImageHtml(time, d) + h;
         }
 
+        if (g_collection.grid) g_collection.grid.isotope('destroy')
         g_collection.grid = $('.grid').html(h).isotope({
             itemSelector: '.grid-item',
-            percentPosition: true,
+            percentPosition: false,
         });
+        g_collection.gridProgress();
+    },
+    gridProgress: () => {
         g_collection.grid.imagesLoaded().progress(function(instance, image) {
-            if (image.img.classList.contains('photo')) {
-                g_collection.grid.isotope('layout');
-            }
+           if (image.isLoaded) {
+             g_collection.grid.isotope('layout');
+         }
         });
     }
 

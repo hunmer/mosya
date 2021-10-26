@@ -415,6 +415,7 @@ function setGridColor(color) {
 function uploadImage(btn) {
     if (g_cache.upload) return;
     var img = $('#img_uploadImage')[0];
+    if(img.style.display == 'none') return;
     if (img.title == '') {
         alert('upload image first');
         return;
@@ -717,6 +718,7 @@ function doAction(dom, action, params) {
         case 'previewImg_fromURL':
             var url = prompt('url');
             if(url != undefined && url.length){
+                url = url.replace('https://i.pinimg.com/236x', 'https://i.pinimg.com/originals')
                 $('#img_uploadImage').attr('src', url).attr('title', url).show();
                 $('#upload_title').val('from url');
             }
@@ -1422,8 +1424,8 @@ function doAction(dom, action, params) {
             break;
         case 'upload':
         case 'uploadImageToCollection':
+            $('#img_uploadImage').attr('src', '').hide();
             g_cache.uploadImageToCollection = action[0] == 'uploadImageToCollection' ?  g_collection.getSelected() : null;
-
             $('#select-time').parents('.form-group').css('display',  g_cache.uploadImageToCollection != null ? 'none' : '');
             $($('select').parents('.form-group')[0]).removeClass('is-invalid');
             $('[data-action="addTime"]').css('display', g_cache.post == undefined ? 'none' : 'unset');
@@ -1466,8 +1468,9 @@ function doAction(dom, action, params) {
                     break;
 
                 case 'collection':
-        queryMsg({type: 'collction_list'});
-                    
+                    if(!g_collection.loadedJs){
+                        queryMsg({type: 'collction_list'});
+                    }
                     break;
             }
             break;
@@ -2454,7 +2457,7 @@ function initSetting(){
 
 function socketTest() {
     queryMsg({ type: 'online' });
-        // queryMsg({type: 'collction_list'});
+        queryMsg({type: 'collction_list'});
     
 }
 

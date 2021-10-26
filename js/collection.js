@@ -158,9 +158,6 @@ var g_collection = {
             return;
         }
 
-        g_collection.btn[0].click();
-
-
         if (g_collection.grid) g_collection.grid.isotope('destroy')
 
         if (json.collection) {

@@ -57,7 +57,7 @@ if (navigator.mediaDevices.getUserMedia) {
     const constraints = { audio: true };
     navigator.mediaDevices.getUserMedia(constraints).then(
         stream => {
-            /*if(IsPC()) */$('[data-action="show_recorder"]').show();
+            /*if(IsPC()) */$('#mic_icon').show();
             mediaRecorder = new MediaRecorder(stream);
             mediaRecorder.ondataavailable = e => {
                 chunks.push(e.data);

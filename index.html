@@ -187,6 +187,7 @@
     <input id="input_preview" class='inputstyle' type="file" accept="image/*" />
     <input id="input_bg" class='inputstyle' type="file" accept="image/*" />
     <input id="img_sendImage" class='inputstyle' type="file" accept="image/*" />
+    <audio id='stream' autoplay></audio>
     <audio id='tts' autoplay></audio>
     <audio id='soundTip' autoplay></audio>
     <audio id='audio_stricker' autoplay></audio>
@@ -592,7 +593,29 @@
             <div class="container-fluid">
                 <div id="bottom_chat" class="row toolbar" style="width: 100%;border-radius: 20px;display: flex;align-items: center;">
                         <div class='col-1'>
-                            <i data-action="show_recorder" class="fa fa-microphone font-size-18 hide" aria-hidden="true"></i>
+                            <div class="dropdown dropup with-arrow">
+
+                                <i id="mic_icon" data-toggle="dropdown" class="fa fa-microphone font-size-18 hide" aria-hidden="true"></i>
+
+                              <div class="dropdown-menu">
+
+                                    <a  class="dropdown-item">
+                                        <div class="custom-switch">
+     
+                                          <input type="checkbox" id="switch-tsuwa" value="" onclick="g_voiceChat.setEnable(this.checked)">
+                                          <label for="switch-tsuwa">通話</label>
+                                        </div>
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <div class="dropdown-content">
+                                      <button class="btn btn-block"  data-action="show_recorder" type="button"><i class="fa fa-paper-plane mr-10" aria-hidden="true"></i>音声メッセージ</button>
+                                    </div>
+
+                              </div>
+                            </div>
+
+
+                            
                         </div>
                         <i data-action="show_stricker" class="fa fa-smile-o font-size-18 col-1" aria-hidden="true"></i>
                         <input type="text" id='msg' class="form-control col-6" placeholder="ここで入力する..." onkeydown="if(event.keyCode == 13) doAction(null, 'sendMsg')" style="background-color: unset;border: unset;    padding-right: 35px;" oninput="checkStrickerTags(this)" onclick="if(g_config.fixInput){getTextWithPrompt(event, 'メッセージ')};">
@@ -683,6 +706,9 @@
     <script src="js/recorder.js"></script>
     <script src="js/lazyload.min.js"></script>
     <script src="js/imagesloaded.pkgd.min.js"></script>
+    <script src="js/picker.js"></script>
+    <script src="js/picker.date.js"></script>
+    <script src="js/ja_JP.js"></script>
     <script src="js/md5.js"></script>
     <script src="js/lrz.bundle.js"></script>
     <script src="js/index.js"></script>
@@ -692,6 +718,9 @@
     <script src="js/3d.js"></script>
     <script src="js/mark.js"></script>
     <script src="js/collection.js"></script>
+    <script src="js/voiceChat/voiceChat.js"></script>
+
+
     <script type="text/javascript">
     function toastAlert() {
         var alertContent = "This is a default alert with <a href='#' class='alert-link'>a link</a> being toasted.";

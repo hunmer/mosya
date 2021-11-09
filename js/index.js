@@ -6,6 +6,7 @@ var _tts = $('#tts')[0];
 var _audio_stricker = $('#audio_stricker')[0];
 var g_json;
 var socket_url = 'wss:///mosya-server.glitch.me';
+// var socket_url = 'ws://'+location.host+':8000';
 var g_imageHost = 'https://mosya-server.glitch.me/';
 var g_api = 'https://neysummer-api.glitch.me/';
 var g_test = 1;
@@ -433,7 +434,7 @@ function uploadImage(btn) {
         title: $('#upload_title').val(),
         img: img.src,
     }
-    queryMsg({ type: 'post', data: g_cache.post , collection:  g_cache.uploadImageToCollection });
+    queryMsg({ type: 'post', data: g_cache.post , collection:  g_cache.uploadImageToCollection, katai:  g_cache.uploadImageToKadai });
 }
 
 function selectTime(dom) {
@@ -1424,11 +1425,27 @@ function doAction(dom, action, params) {
             break;
         case 'upload':
         case 'uploadImageToCollection':
+        case 'uploadImageToKadai':
             $('#img_uploadImage').attr('src', '').hide();
-            g_cache.uploadImageToCollection = action[0] == 'uploadImageToCollection' ?  g_collection.getSelected() : null;
-            $('#select-time').parents('.form-group').css('display',  g_cache.uploadImageToCollection != null ? 'none' : '');
+
+            delete g_cache.uploadImageToCollection, g_cache.uploadImageToKadai;
+
+            var display = 'none'
+            switch (action[0]) {
+                case 'uploadImageToCollection':
+                    g_cache.uploadImageToCollection = g_collection.getSelected();
+                    break;
+
+                case 'uploadImageToKadai':
+                    g_cache.uploadImageToKadai = g_kadai.getSelected();
+                    break;
+
+                default: 
+                    display = '';
+            }
+            $('#select-time').parents('.form-group').css('display', display);
             $($('select').parents('.form-group')[0]).removeClass('is-invalid');
-            $('[data-action="addTime"]').css('display', g_cache.post == undefined ? 'none' : 'unset');
+            $('[data-action="addTime"]').css('display', display == '' && g_cache.post != undefined ? 'unset' : 'none');
             halfmoon.toggleModal('modal-upload');
             break;
         case 'toTab':
@@ -1771,7 +1788,7 @@ function me(){
 
 
 function reviceMsg(data) {
-    console.log(data);
+    // console.log(data);
     var type = data.type;
     delete data.type;
     if(g_revices[type]){
@@ -2096,11 +2113,11 @@ function addMsg(html) {
     return d;
 }
 
-function alertMsg(data) {
+function alertMsg(data, msg = false) {
     var div = $('#alert_custom');
     div.find('img').attr('src', 'res/' + data.user + '.jpg');
     div.find('h4').html(data.user);
-    div.find('div').html(data.msg);
+    div.find('div').html(msg || data.msg);
     $('#alert_custom').on('click', () => {
         doAction(null, 'prompt_msg');
     });
@@ -2456,6 +2473,9 @@ function initSetting(){
 }
 
 function socketTest() {
+    if(g_config.voiceChat){
+  g_voiceChat.setEnable(true);
+}
     queryMsg({ type: 'online' });
         queryMsg({type: 'collction_list'});
     

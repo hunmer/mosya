@@ -165,7 +165,8 @@ function getFormatedTime(i = 0, date = new Date()) {
             return date.getMonth() + 1 + '/' + date.getDate() + ' ' + _s(date.getHours()) + ':' + _s(date.getMinutes());
         case 2:
             return date.getMonth() + 1 + '/' + date.getDate();
-            break;
+         case 3:
+            return date.getFullYear() + '/'+ date.getMonth() + 1 + '/' + date.getDate();
     }
 }
 

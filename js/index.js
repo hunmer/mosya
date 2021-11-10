@@ -2074,9 +2074,8 @@ function reviceMsg(data) {
             }
 
             if (data.user != g_config.user.name) {
-                NotificationMessage({title: 'チャットメッセージ', msg: msg, icon: getUserIcon(data.user)})
+                NotificationMessage({title: 'チャットメッセージ', msg: $('<div>'+msg+'</div>').text(), icon: getUserIcon(data.user)})
             }
-
 
             closeModal('modal-custom', 'chat', () => {
                 $('#modal-custom .modal-html table').prepend(dom.clone());

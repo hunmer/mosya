@@ -43,6 +43,47 @@ var g_pose = {
     time: 0
 }
 
+
+if (Notification.permission != "denied") {
+    Notification.requestPermission(function (permission) {});
+}
+
+function  NotificationMessage(opt, onclick, onclose){
+    if (!window.Notification && Notification.permission != "granted") return;
+    if(typeof(opt) != 'object') opt = {
+        title: '',
+        msg: opt,
+        icon: ''
+    }
+     var popNotice = function() {
+        if (Notification.permission == "granted") {
+            var notification = new Notification(opt.title, {
+                body: opt.msg,
+                icon: opt.icon
+            });
+            
+            notification.onclick = function() {
+                if(typeof(onclick) == 'function') onclick();
+                notification.close();    
+            };
+
+            notification.onclose = function() {
+                if(typeof(onclose) == 'function') onclose();
+            };
+        }    
+    };
+
+     if (Notification.permission != "denied") {
+        Notification.requestPermission(function (permission) {
+          popNotice();
+        });
+}else{
+    popNotice();
+}
+}
+
+
+
 function local_saveJson(key, data) {
     if (window.localStorage) {
         key = g_localKey + key;

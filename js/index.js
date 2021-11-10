@@ -2027,9 +2027,11 @@ function reviceMsg(data) {
                   <td class="text-right">` + getFormatedTime() + `</td>
                 </tr>`);
             var image = dom.find('.thumb');
+            var msg = data.msg;
             if (data.user != g_config.user.name) {
                 var skip = false;
                 if (type == 'voice') {
+                    msg = '【音声メッセージ】'
                     if (mediaRecorder.state !== "recording") {
                         dom.find('.play_btn').click();
                         skip = true;
@@ -2048,7 +2050,7 @@ function reviceMsg(data) {
             }
             
             if (image.length) {
-
+                 msg = '【画像】'
                 if (data.audio) {
                     $(`<a  class="btn btn-square btn-success rounded-circle" data-action="play_strickerAudio" data-audio="` + data.audio + `" style="position: absolute;bottom: 5px;right: 20px;" role="button"><i class="fa fa-play" aria-hidden="true"`+(data.tts ? ' alt="'+data.tts+'"' : '')+`></i></a> 
                     `).insertAfter(image);
@@ -2070,7 +2072,12 @@ function reviceMsg(data) {
                 }
                 addAnimation(image, 'rubberBand');
             }
-            
+
+            if (data.user != g_config.user.name) {
+                NotificationMessage({title: 'チャットメッセージ', msg: msg, icon: getUserIcon(data.user)})
+            }
+
+
             closeModal('modal-custom', 'chat', () => {
                 $('#modal-custom .modal-html table').prepend(dom.clone());
             });

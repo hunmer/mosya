@@ -2473,9 +2473,13 @@ function initSetting(){
 }
 
 function socketTest() {
-    if(g_config.voiceChat){
-  g_voiceChat.setEnable(true);
-}
+    if(g_config.voiceChat_all){
+        g_voiceChat.serRevicealbe(g_config.voiceChat_all);
+        if(g_config.voiceChat){
+            g_voiceChat.setEnable(g_config.voiceChat);
+        }
+    }
+
     queryMsg({ type: 'online' });
         queryMsg({type: 'collction_list'});
     

@@ -598,14 +598,20 @@
                                 <i id="mic_icon" data-toggle="dropdown" class="fa fa-microphone font-size-18 hide" aria-hidden="true"></i>
 
                               <div class="dropdown-menu">
-
-                                    <a  class="dropdown-item">
+                                     <a  class="dropdown-item">
                                         <div class="custom-switch">
-     
-                                          <input type="checkbox" id="switch-tsuwa" value="" onclick="g_voiceChat.setEnable(this.checked)">
+                                          <input type="checkbox" id="switch-tsuwa" value="" onclick="g_voiceChat.serRevicealbe(this.checked)">
                                           <label for="switch-tsuwa">通話</label>
                                         </div>
                                     </a>
+
+                                    <a  class="dropdown-item">
+                                        <div class="custom-switch">
+                                          <input type="checkbox" id="switch-mic" value="" onclick="g_voiceChat.setEnable(this.checked)">
+                                          <label for="switch-mic">マイク</label>
+                                        </div>
+                                    </a>
+                                   
                                     <div class="dropdown-divider"></div>
                                     <div class="dropdown-content">
                                       <button class="btn btn-block"  data-action="show_recorder" type="button"><i class="fa fa-paper-plane mr-10" aria-hidden="true"></i>音声メッセージ</button>

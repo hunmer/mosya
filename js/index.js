@@ -1487,6 +1487,9 @@ function doAction(dom, action, params) {
                 case 'collection':
                     if(!g_collection.loadedJs){
                         queryMsg({type: 'collction_list'});
+                    }else
+                    if(g_collection.selected){
+                        g_collection.selectCollection(g_collection.selected);
                     }
                     break;
             }
@@ -1538,10 +1541,14 @@ function playUrl(data, user) {
     var obj;
     switch (data.type) {
         case 'video_embed':
+            if(g_cache.video_embed && g_cache.video_embed == data.url){
+                return;
+            }
             $('iframe').attr('src',data.url).show();
             _video.pause();
             _audio.pause();
-            _video.hide();
+            $(_video).hide();
+            g_cache.video_embed = data.url;
             break;
         case 'audio':
             obj = _audio;
@@ -1788,7 +1795,7 @@ function me(){
 
 
 function reviceMsg(data) {
-    // console.log(data);
+    console.log(data);
     var type = data.type;
     delete data.type;
     if(g_revices[type]){
@@ -2487,7 +2494,9 @@ function socketTest() {
     }
 
     queryMsg({ type: 'online' });
+    if(!g_collection.loadedJs){
         queryMsg({type: 'collction_list'});
+    }
     
 }
 

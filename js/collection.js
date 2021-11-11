@@ -176,15 +176,17 @@ var g_collection = {
             g_collection.data = json;
             g_collection.selectCollection(g_config.lastCollection);
         }
-
-
     },
 
     selectCollection: (collection) => {
 
-    	$('#content_collection select option[value="'+collection+'"]').prop('selected', true);
-            g_collection.showCollection(collection);
-
+        if($('#content_collection').css('display') == 'none'){
+            g_collection.selected = collection; 
+        }else{
+            delete g_collection.selected;
+                $('#content_collection select option[value="'+collection+'"]').prop('selected', true);
+              g_collection.showCollection(collection);
+        }
     },
 
     getImageHtml: (time, d) => {

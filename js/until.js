@@ -44,8 +44,10 @@ var g_pose = {
 }
 
 
-if (Notification.permission != "denied") {
-    Notification.requestPermission(function (permission) {});
+if (window.Notification) {
+     if(Notification.permission != "denied"){
+       Notification.requestPermission(function (permission) {});
+     }
 }
 
 function  NotificationMessage(opt, onclick, onclose){

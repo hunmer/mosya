@@ -61,10 +61,18 @@
  }
 
  $(function() {
+
      if (!g_config.user) {
-         alert('请先登录!');
-         location.href = 'index.html';
-         return;
+         var user = prompt('名前を入力ください');
+         if (user != '') {
+             g_config.user = {
+                 name: user,
+                 icon: 'icons/default.icon'
+             }
+             local_saveJson('config', g_config);
+         }else{
+            location.reload();
+         }
      }
      if (g_data.data) {
          parseData(g_data.data);

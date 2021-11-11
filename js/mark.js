@@ -151,7 +151,7 @@ var g_dot = {
 			y += '%';
 		}
 
-    var dot = $(`<span class='img-mark-dots' title="`+data.text+`" data-text="`+data.text+`" data-md5="`+md5+`" data-user="`+data.user+`" data-dot="`+k+`" style="left: `+x+`;top:`+y+`;background-image: url(res/`+data.user+`.jpg);`+css+`" data-action="dot_click"></span>`).appendTo(g_dot.gallery ? '.viewer-canvas' : '#modal-img-div');
+    var dot = $(`<span class='img-mark-dots' data-toggle="tooltip" data-title="`+data.text+`" data-placement="bottom" data-text="`+data.text+`" data-md5="`+md5+`" data-user="`+data.user+`" data-dot="`+k+`" style="left: `+x+`;top:`+y+`;background-image: url(res/`+data.user+`.jpg);`+css+`" data-action="dot_click"></span>`).appendTo(g_dot.gallery ? '.viewer-canvas' : '#modal-img-div');
     if(isNew){
     	dot.attr('data-isnew', 1).click();
     }

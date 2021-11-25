@@ -13,7 +13,14 @@ var g_voiceChat = {
             });
 
             registerRevice('reviceStream', (data) => {
-                alertMsg(data, '🎤マイク: ' + (data.data ? 'ON' : 'OFF'));
+                if(data.tip) alertMsg(data, '🎤マイク: ' + (data.data ? 'ON' : 'OFF'));
+            });
+
+            registerRevice('admin_enableTsuwa', (data) => {
+                g_voiceChat.setEnable(data.data, false);
+                if(!data.data){
+                    g_voiceChat.serRevicealbe(data.data, false);
+                }
             });
 
             callback();
@@ -21,11 +28,11 @@ var g_voiceChat = {
 
     },
 
-    setEnable: (enable) => { // 麦克风开关
+    setEnable: (enable, tip = true) => { // 麦克风开关
         $('#switch-mic').prop('checked',enable);
         g_config.voiceChat = enable;
         local_saveJson('config', g_config);
-        queryMsg({ type: 'reviceStream', data: enable }, true);
+        queryMsg({ type: 'reviceStream', data: enable, tip: tip }, true);
 
         var callback = () => {
             if (enable) {
@@ -40,12 +47,12 @@ var g_voiceChat = {
         if (enable && !g_voiceChat.inited) return g_voiceChat.init(callback);
     },
 
-    serRevicealbe: (enable) => { // 总开关
+    serRevicealbe: (enable,  tip = true) => { // 总开关
         $('#switch-tsuwa').prop('checked',enable);
          g_config.voiceChat_all = enable;
         local_saveJson('config', g_config);
         if(!enable){
-            g_voiceChat.setEnable(enable);
+            g_voiceChat.setEnable(enable, tip);
         }
     },
     playerBlobAudio: (blob) => {

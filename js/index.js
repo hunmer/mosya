@@ -353,6 +353,20 @@ function init() {
     });
     g_cache.loginTime = getNow(); 
 
+    if(g_config.user.name == 'maki'){
+        $('#bottom_chat .dropdown-menu').append(`
+            <div class="dropdown-divider"></div>
+            <a  class="dropdown-item">
+                <div class="custom-switch">
+                  <input type="checkbox" id="switch-tsuwa-all" value="" onclick="queryMsg({type: 'admin_enableTsuwa', data: this.checked})">
+                  <label for="switch-tsuwa-all">全体</label>
+                </div>
+            </a>
+
+            `)
+
+    }
+
     test();
 }
 

@@ -31,6 +31,9 @@
     <link rel="stylesheet" href="css/halfmoon-variables.min.css">
     <link rel="stylesheet" href="css/animate.min.css">
     <link rel="stylesheet" href="css/range.css">
+    
+    <link rel="stylesheet" href="css/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/owl.theme.default.min.css">
 
     <!-- <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet"> -->
     <link rel="stylesheet" href="css/index.css">
@@ -40,15 +43,15 @@
 <body class="dark-mode with-custom-webkit-scrollbars with-custom-css-scrollbars" data-dm-shortcut-enabled="true" data-sidebar-shortcut-enabled="true">
     
 
-    <div class="modal" id="modal-upload" tabindex="-1" role="dialog">
+    <div class="modal ie-scroll-fix" id="modal-upload" tabindex="-1" role="dialog" data-overlay-dismissal-disabled='...' data-esc-dismissal-disabled='...'>
         <div class="modal-dialog" role="document">
-            <div class="modal-content">
+            <div class="modal-content" style="max-height: 80%;overflow-y: auto;">
                 <a href="javascript: halfmoon.toggleModal('modal-upload')" class="btn close" role="button" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </a>
                 <h5 class="modal-title">アップロード</h5>
                 <div class="text-center">
-                    <img src="" id='img_uploadImage' class="img-fluid rounded w-full" alt="" style="display: none;" data-action="previewImage">
+                    <div id="img_uploadImage" class="owl-carousel owl-theme"></div>
                     <button class="btn w-half btn-primary mb-10 mt-10" onclick="$('#input_preview').click();">画像を選択</button>
                     <button class="btn w-half btn-primary mb-10 mt-10" data-action="previewImg_fromURL">URLから</button>
                 </div>
@@ -399,8 +402,8 @@
             <div class="container-fluid p-10" id="image_div">
                 <div id='content' style="width: 100%;text-align: center;">
                     <canvas style="border-radius: 20px;"></canvas>
-                    <div id='div_mainImg' style="margin: 0 auto;">
-                        <img id="image" data-action="openViewer" class='animated bounceInDown hide' animated='bounceInDown' alt="Picture" style="border-radius: 20px;">
+                    <div id='div_mainImg' class="owl-carousel owl-theme" style="margin: 0 auto;">
+                        <!-- <img id="image" data-action="openViewer" class='animated bounceInDown hide' animated='bounceInDown' alt="Picture" style="border-radius: 20px;"> -->
                     </div>
                 </div>
             </div>
@@ -724,6 +727,8 @@
     <script src="js/mark.js"></script>
     <script src="js/collection.js"></script>
     <script src="js/voiceChat/voiceChat.js"></script>
+    <script src="js/owl.carousel.min.js"></script>
+    
 
 
     <script type="text/javascript">

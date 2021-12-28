@@ -25,6 +25,8 @@ var g_cache = {
     saveTag: {
         timer: 0,
     },
+    imgs: [],
+    // imgs: [ 'res/カエル.jpg', 'res/ウサギ.jpg', 'res/スター.jpg'],
     closeCustom: () => {},
     tags: [],
     a_tts: [],
@@ -66,6 +68,16 @@ $(function() {
         save = true;
     }
     setUser(g_config.user.name, save);
+
+    /*$('#div_mainImg').html(`
+          <img id="image" src="res/カエル.jpg" data-dbaction="openViewer" class='animated bounceInDown' animated='bounceInDown' alt="Picture" style="border-radius: 20px;">
+          <img id="image" src="res/ウサギ.jpg" data-dbaction="openViewer" class='animated bounceInDown ' animated='bounceInDown' alt="Picture" style="border-radius: 20px;">
+          <img id="image" src="res/スター.jpg" data-dbaction="openViewer" class='animated bounceInDown ' animated='bounceInDown' alt="Picture" style="border-radius: 20px;">
+      `).owlCarousel({
+        items: 1
+      });*/
+
+     
 });
 
 function init() {
@@ -237,6 +249,10 @@ function init() {
     $(document).on('click', '[data-action]', function(event) {
             doAction(this, $(this).attr('data-action'));
         })
+     .on('dblclick', '[data-dbaction]', function(event) {
+        console.log(this);
+            doAction(this, $(this).attr('data-dbaction'));
+        })
         .on('click', '.progress', function(event) {
             var id = $(this).attr('data-audio');
             if (id != undefined) {
@@ -258,15 +274,12 @@ function init() {
     on('mouseenter', '.gif', (event) => {
         var img = event.currentTarget;
         img.src = img.src;
-    });
-
-    $('#image')[0].addEventListener('viewed', function() {
+    }).on('viewed', '#div_mainImg .owl-item.active', function() {
+        console.log('show');
         if (this.viewer === _viewer) {
             $('#cnt').show();
         }
-    });
-
-    $('#image')[0].addEventListener('hidden', function() {
+    }).on('hidden', '#div_mainImg .owl-item.active', function() {
         if (this.viewer === _viewer) {
             if (!g_cache.post || g_cache.post.time <= 0) {
                 $('#cnt').hide();
@@ -283,8 +296,7 @@ function init() {
                 //console.log(parseInt(that.files[0].size / 1024), parseInt(rst.fileLen / 1024));
                 switch (that.id) {
                     case 'input_preview':
-                        $('#img_uploadImage').attr('src', rst.base64).attr('title', rst.origin.name).show();
-                        $('#upload_title').val(that.files[0].name);
+                        uploadPreviewImage(rst.base64, rst.origin.name);
                         break;
 
                     case 'img_sendImage':
@@ -370,6 +382,19 @@ function init() {
     test();
 }
 
+function uploadPreviewImage(img, name){
+     g_cache.imgs.push(img);
+         var inst = $('#img_uploadImage').data('owl.carousel');
+         var index = inst.items().length;
+        inst.add(`<img data-src="`+img+`" data-dbaction="img_uploadImage_delete" class='owl-lazy' title="`+name+`" data-index='`+index+`'>`);
+        inst.to(index);
+        if(index){
+            setTimeout(() => { inst.refresh();inst.to(index);}, 500);
+        }
+        $('#img_uploadImage').attr('src', img).attr('title', ).show();
+        $('#upload_title').val(index ? (index+1)+' pics' : name);
+}
+
 function setAudioSrc(player, src) {
     player.source = src;
     player.src = src;
@@ -429,9 +454,7 @@ function setGridColor(color) {
 
 function uploadImage(btn) {
     if (g_cache.upload) return;
-    var img = $('#img_uploadImage')[0];
-    if(img.style.display == 'none') return;
-    if (img.title == '') {
+    if (!g_cache.imgs.length) {
         alert('upload image first');
         return;
     }
@@ -446,7 +469,7 @@ function uploadImage(btn) {
         user: g_config.user.name,
         time: parseInt($('select')[0].value) * 60,
         title: $('#upload_title').val(),
-        img: img.src,
+        imgs: g_cache.imgs,
     }
     queryMsg({ type: 'post', data: g_cache.post , collection:  g_cache.uploadImageToCollection, katai:  g_cache.uploadImageToKadai });
 }
@@ -609,6 +632,17 @@ function doAction(dom, action, params) {
         g_actions[action[0]](dom, action, params);
     }
     switch (action[0]) {
+        case 'img_uploadImage_delete':
+            if(confirm('是否删除?')){
+                var inst = $('#img_uploadImage').data('owl.carousel');
+                inst.remove(parseInt($(dom).attr('data-index')));
+                setTimeout(() => { inst.refresh();inst.to(0);}, 500);
+                var index = g_cache.imgs.indexOf($(dom).attr('data-src'));
+                if(index > -1){
+                    g_cache.imgs.splice(index, 1);
+                }
+            }
+            break;
         case 'player_embed':
             var url = prompt('embed url',  $('#iframe_music').attr('src') || g_test ?'https://open.spotify.com/playlist/71j4gz1VqJ3a6LGCVpQsYX' : '');
             if(url != undefined && url.length){
@@ -734,8 +768,7 @@ function doAction(dom, action, params) {
             var url = prompt('url');
             if(url != undefined && url.length){
                 url = url.replace('https://i.pinimg.com/236x', 'https://i.pinimg.com/originals')
-                $('#img_uploadImage').attr('src', url).attr('title', url).show();
-                $('#upload_title').val('from url');
+                  uploadPreviewImage(url, 'from url');
             }
             break;
         case 'doSearch':
@@ -1440,8 +1473,6 @@ function doAction(dom, action, params) {
         case 'upload':
         case 'uploadImageToCollection':
         case 'uploadImageToKadai':
-            $('#img_uploadImage').attr('src', '').hide();
-
             delete g_cache.uploadImageToCollection, g_cache.uploadImageToKadai;
 
             var display = 'none'
@@ -1452,6 +1483,21 @@ function doAction(dom, action, params) {
 
                 case 'uploadImageToKadai':
                     g_cache.uploadImageToKadai = g_kadai.getSelected();
+                    break;
+
+                case 'upload':
+                    var h = '';
+                    var i = 0;
+                    for(var img of g_cache.imgs){
+                        h += `<img data-src="`+img+`" data-dbaction="img_uploadImage_delete" class='owl-lazy' data-index="`+i+`">`;
+                        i++;
+                    }
+                     $('#img_uploadImage').html(h).owlCarousel({
+                        items: 1,
+                        autoHeight:true,
+                        lazyLoad:true,
+                      }).show();
+                    display = 'unset';
                     break;
 
                 default: 
@@ -1731,7 +1777,8 @@ function parseMusiclist(data) {
 var g_canva = $('canvas');
 
 function drawBoard() {
-	if($('#image').css('display') == 'none') return;
+    var img = $('#div_mainImg .owl-item.active');
+	if(img.css('display') == 'none') return;
     var context = g_canva.get(0).getContext("2d");
     g_canva[0].height = context.height; // 清除画布
     if (!g_config.grid.enable) {
@@ -1742,18 +1789,16 @@ function drawBoard() {
     g_canva.css('opacity', g_config.grid.opacity || 1);
 
     //grid width and height
-    var bw = $('#image').width()-4;
-    var bh = $('#image').height();
+    var bw = img.width()-4;
+    var bh = img.height();
 
     //padding around grid
     var p = 0;
     //size of canvas
 
-    if (bw != g_canva.width() || bh != g_canva.height()) {
         g_canva.attr('width', bw);
         g_canva.attr('height', bh);
-        g_canva.offset($('#image').offset());
-    }
+        g_canva.offset(img.offset());
     context.beginPath();
     context.setLineDash([3, 3]); //画虚线
     for (var x = 0; x <= bw; x += bw / g_config.grid.x) {
@@ -1797,6 +1842,7 @@ function turnRight() {
 }
 
 function setRotate(rotate) {
+    //$('#div_mainImg .owl-item.active')
     $('#image')
         .removeClass('mirrorRotateLevel')
         .removeClass('mirrorRotateVertical')[0].style.transform = 'rotate(' + rotate + 'deg)';
@@ -2163,34 +2209,45 @@ function closeModal(id, type, fun) {
 
 function parsePost(data, save = true) {
     $('#content_lab .row, #content_lab nav').html('');
-    setRotate(0);
+    //setRotate(0);
     $('#cnt').attr('class', 'badge badge-primary text-light').show();
-    var isFirst = g_cache.post == undefined;
-    var isNew = !isFirst && g_cache.post.img != data.img;
-    if (data.user != g_config.user.name || isFirst) {
+
+     var h = '';
+    var i = 0;
+    for(var img of g_cache.imgs){
+        h += `<img data-src="`+img+`" data-dbaction="openViewer" class='owl-lazy' data-index="`+i+`">`;
+        i++;
+    }
+     $('#div_mainImg').html(h).owlCarousel({
+        items: 1,
+        dots: true,
+          autoHeight:true,
+        lazyLoad:true,
+      }).show().on('changed.owl.carousel', function(event) {
+        setTimeout(() => {drawBoard()}, 500);
+        })
+
         g_cache.post = data;
-    } else {
-        // 自己上传完毕
         $('#btn_upload').html('アップロードする');
         g_cache.upload = false;
         if ($('#modal-upload').hasClass('show')) {
             halfmoon.toggleModal('modal-upload');
         }
-    }
 
-    if (isFirst || isNew) { // 图片有变动才在消息显示
+    //if (isFirst || isNew) { // 图片有变动才在消息显示
         g_canva.hide();
         $('[data-action="finish"]').show();
-        reviceMsg({ type: 'msg', user: data.user, msg: '<img class="thumb" data-action="previewImage" src="' + g_cache.post.img + '">' });
-            $('#div_mainImg').css('height', '');
+        //reviceMsg({ type: 'msg', user: data.user, msg: '<img class="thumb" data-action="previewImage" src="' + g_cache.post.img + '">' });
+       $('#div_mainImg').css('height', '');
 
-        loadImage(g_cache.post.img);
+        //loadImage(g_cache.post.img);
         
-    }
+    //}
     $('#cnt1').hide();
-    enableTimer(() => {
-        return g_cache.post.time--;
-    });
+        enableTimer(() => {
+            return g_cache.post.time--;
+        });
+    
 }
 
 function loadImage(src, anime = true, dsrc = ''){
@@ -2207,7 +2264,6 @@ function loadImage(src, anime = true, dsrc = ''){
         			naturalHeight: h,
         		}
         		var mx = $('#div_mainImg').width();
-        		console.log(w, mx);
         		if(w > mx){
         			w = mx;
         		}

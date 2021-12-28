@@ -4,6 +4,9 @@
     width: 100%;
 }
 
+/*.owl-item {height: 0;}    
+.owl-item.active {height: auto;}
+*/
   .grid-sizer,
     .grid-item {
         width: 50%;

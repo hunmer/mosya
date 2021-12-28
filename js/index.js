@@ -2207,13 +2207,20 @@ function closeModal(id, type, fun) {
 }
 
 function parsePost(data, save = true) {
+        g_cache.post = data;
+        $('#btn_upload').html('アップロードする');
+        g_cache.upload = false;
+        if ($('#modal-upload').hasClass('show')) {
+            halfmoon.toggleModal('modal-upload');
+        }
+        
     $('#content_lab .row, #content_lab nav').html('');
     //setRotate(0);
     $('#cnt').attr('class', 'badge badge-primary text-light').show();
 
      var h = '';
     var i = 0;
-    for(var img of g_cache.imgs){
+    for(var img of data.imgs){
         h += `<img data-src="`+img+`" data-dbaction="openViewer" class='owl-lazy' data-index="`+i+`">`;
         i++;
     }
@@ -2226,12 +2233,7 @@ function parsePost(data, save = true) {
         setTimeout(() => {drawBoard()}, 500);
         })
 
-        g_cache.post = data;
-        $('#btn_upload').html('アップロードする');
-        g_cache.upload = false;
-        if ($('#modal-upload').hasClass('show')) {
-            halfmoon.toggleModal('modal-upload');
-        }
+    
 
     //if (isFirst || isNew) { // 图片有变动才在消息显示
         g_canva.hide();

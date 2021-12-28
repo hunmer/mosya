@@ -391,7 +391,6 @@ function uploadPreviewImage(img, name){
         if(index){
             setTimeout(() => { inst.refresh();inst.to(index);}, 500);
         }
-        $('#img_uploadImage').attr('src', img).attr('title', ).show();
         $('#upload_title').val(index ? (index+1)+' pics' : name);
 }
 

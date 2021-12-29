@@ -384,14 +384,30 @@ function init() {
 
 function uploadPreviewImage(img, name){
      g_cache.imgs.push(img);
-         var inst = $('#img_uploadImage').data('owl.carousel');
-         var index = inst.items().length;
-        inst.add(`<img data-src="`+img+`" data-dbaction="img_uploadImage_delete" class='owl-lazy' title="`+name+`" data-index='`+index+`'>`);
-        inst.to(index);
-        if(index){
-            setTimeout(() => { inst.refresh();inst.to(index);}, 500);
-        }
+         addImagetoCarousel('#img_uploadImage', img, true, `
+            <div style="position: relative;"  data-index='{index}'>
+                <img data-src="`+img+`" class='owl-lazy' title="`+name+`">
+                <div style="position: absolute;right: 10px;top:10px">
+                    <a data-action="img_uploadImage_delete"  class="btn btn-square btn-danger rounded-circle btn-lg" role="button"><i class="fa fa-trash-o" aria-hidden="true"></i></a>
+                </div>
+            </div>
+            `);
+
         $('#upload_title').val(index ? (index+1)+' pics' : name);
+}
+
+function addImagetoCarousel(id, img, to = true, html){
+    var inst = $(id).data('owl.carousel');
+
+         var index = inst.items().length;
+        inst.add(html.replace('{index}', index));
+        if(to) inst.to(index);
+        if(index){
+            setTimeout(() => {
+                inst.refresh();
+                if(to) inst.to(index);
+            }, 500);
+        }
 }
 
 function setAudioSrc(player, src) {
@@ -457,6 +473,10 @@ function uploadImage(btn) {
         alert('upload image first');
         return;
     }
+    var add = $('#checkbox_addImage').prop('checked');
+    if(!add && $('#div_mainImg .owl-item').length){
+        if(!confirm('この操作により、公開された画像は消去されます!よろしいですか？')) return;
+    }
     if ($('select')[0].value == '') {
         $($('select').parents('.form-group')[0]).addClass('is-invalid');
         return;
@@ -469,6 +489,7 @@ function uploadImage(btn) {
         time: parseInt($('select')[0].value) * 60,
         title: $('#upload_title').val(),
         imgs: g_cache.imgs,
+        add: add
     }
     queryMsg({ type: 'post', data: g_cache.post , collection:  g_cache.uploadImageToCollection, katai:  g_cache.uploadImageToKadai });
 }
@@ -631,12 +652,18 @@ function doAction(dom, action, params) {
         g_actions[action[0]](dom, action, params);
     }
     switch (action[0]) {
+        case 'delImg':
+            if(confirm('消すますか?')){
+                queryMsg({type: 'delImg', data:  $('#div_mainImg .owl-item.active img').attr('src')}, true);
+            }
+            break;
         case 'img_uploadImage_delete':
-            if(confirm('是否删除?')){
+            if(confirm('消すますか?')){
                 var inst = $('#img_uploadImage').data('owl.carousel');
-                inst.remove(parseInt($(dom).attr('data-index')));
+                var div = $(dom).parents('[data-index]');
+                inst.remove(parseInt(div.attr('data-index')));
                 setTimeout(() => { inst.refresh();inst.to(0);}, 500);
-                var index = g_cache.imgs.indexOf($(dom).attr('data-src'));
+                var index = g_cache.imgs.indexOf(div.find('img').attr('data-src'));
                 if(index > -1){
                     g_cache.imgs.splice(index, 1);
                 }
@@ -980,10 +1007,24 @@ function doAction(dom, action, params) {
             $('#checkbox_fixInput').prop('checked', g_config.fixInput);
             break;
         case 'openViewer':
+        case 'openViewerFromCau':
         case 'openViewerFromModal':
             hideSidebar();
             if (_viewer != undefined) _viewer.destroy();
-            _viewer = new Viewer(action[0] == 'openViewerFromModal' ? $(dom).parents('.modal-dialog').find('img')[0] : dom, {
+            switch(action[0]){
+                case 'openViewerFromModal':
+                    img = $(dom).parents('.modal-dialog').find('img')[0];
+                    break;
+
+                case 'openViewer':
+                    img = dom;
+                    break;
+
+                case 'openViewerFromCau':
+                    img = $('#div_mainImg .owl-item.active img')[0];
+                    break;
+            }
+            _viewer = new Viewer(img, {
                 backdrop: 'static',
                 navbar: 0,
                 title: 0,
@@ -1485,10 +1526,20 @@ function doAction(dom, action, params) {
                     break;
 
                 case 'upload':
+                   var inst = $('#img_uploadImage').data('owl.carousel');;
+                    if(inst != undefined) inst.destroy();
+
                     var h = '';
                     var i = 0;
                     for(var img of g_cache.imgs){
-                        h += `<img data-src="`+img+`" data-dbaction="img_uploadImage_delete" class='owl-lazy' data-index="`+i+`">`;
+                        h += `
+                        <div style="position: relative;"  data-index='`+i+`'>
+                            <img data-src="`+img+`" class='owl-lazy' title="`+name+`">
+                            <div style="position: absolute;right: 10px;top:10px">
+                                <a data-action="img_uploadImage_delete"  class="btn btn-square btn-danger rounded-circle btn-lg" role="button"><i class="fa fa-trash-o" aria-hidden="true"></i></a>
+                            </div>
+                        </div>
+                        `
                         i++;
                     }
                      $('#img_uploadImage').html(h).owlCarousel({
@@ -1502,7 +1553,7 @@ function doAction(dom, action, params) {
                 default: 
                     display = '';
             }
-            $('#select-time').parents('.form-group').css('display', display);
+            //$('#select-time').parents('.form-group').css('display', display);
             $($('select').parents('.form-group')[0]).removeClass('is-invalid');
             $('[data-action="addTime"]').css('display', display == '' && g_cache.post != undefined ? 'unset' : 'none');
             halfmoon.toggleModal('modal-upload');
@@ -1861,6 +1912,34 @@ function reviceMsg(data) {
         return g_revices[type](data);
     }
     switch (type) {
+        case 'delImg':
+            var inst = $('#div_mainImg').data('owl.carousel');
+            for(var div of inst.items()){
+                var img = div.find('img');
+                if(img.attr('src') == data.data){
+                    inst.remove(parseInt(img.attr('data-index')));
+                    setTimeout(() => { inst.refresh()}, 500);
+                    return;
+                }
+            }
+                break;
+        case 'addImgs':
+            for(var img of data.data){
+                addImagetoCarousel('#div_mainImg', img, false, `
+                    <div style="position: relative;"  data-index="{index}">
+                    <img data-src="`+img+`" data-dbaction="openViewer" class='owl-lazy'>
+                    <div style="position: absolute;right: 10px;top:10px">
+                        <a data-action="openViewerFromCau"  class="btn btn-square btn-primary rounded-circle btn-lg" role="button"><i class="fa fa-arrows-alt" aria-hidden="true"></i></a>
+                        <a data-action="delImg"  class="btn btn-square btn-danger rounded-circle btn-lg" role="button"><i class="fa fa-trash-o" aria-hidden="true"></i></a>
+                    </div>
+                </div>
+                    `)
+            }
+              if ($('#modal-upload').hasClass('show')) {
+                    halfmoon.toggleModal('modal-upload');
+                }
+
+            break;
         case 'player_embed':
             reviceMsg({
                 type: 'msg',
@@ -2207,8 +2286,17 @@ function closeModal(id, type, fun) {
 }
 
 function parsePost(data, save = true) {
-        g_cache.post = data;
         $('#btn_upload').html('アップロードする');
+
+    if(g_cache.post && g_cache.post.imgs == data.imgs){ // 没有变化
+        return;
+    }
+    if(data.user == g_config.user.name){ // 清除上传
+        g_cache.imgs = [];
+    }
+    var inst = $('#div_mainImg').data('owl.carousel');;
+    if(inst != undefined) inst.destroy();
+        g_cache.post = data;
         g_cache.upload = false;
         if ($('#modal-upload').hasClass('show')) {
             halfmoon.toggleModal('modal-upload');
@@ -2221,7 +2309,15 @@ function parsePost(data, save = true) {
      var h = '';
     var i = 0;
     for(var img of data.imgs){
-        h += `<img data-src="`+img+`" data-dbaction="openViewer" class='owl-lazy' data-index="`+i+`">`;
+        h += `
+            <div style="position: relative;"  data-index="`+i+`">
+                <img data-src="`+img+`" data-dbaction="openViewer" class='owl-lazy'>
+                <div style="position: absolute;right: 10px;top:10px">
+                    <a data-action="openViewerFromCau"  class="btn btn-square btn-primary rounded-circle btn-lg" role="button"><i class="fa fa-arrows-alt" aria-hidden="true"></i></a>
+                    <a data-action="delImg"  class="btn btn-square btn-danger rounded-circle btn-lg" role="button"><i class="fa fa-trash-o" aria-hidden="true"></i></a>
+                </div>
+            </div>
+        `;
         i++;
     }
      $('#div_mainImg').html(h).owlCarousel({
@@ -2232,8 +2328,6 @@ function parsePost(data, save = true) {
       }).show().on('changed.owl.carousel', function(event) {
         setTimeout(() => {drawBoard()}, 500);
         })
-
-    
 
     //if (isFirst || isNew) { // 图片有变动才在消息显示
         g_canva.hide();

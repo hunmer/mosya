@@ -59,7 +59,11 @@
                     <label for="username">タイトル</label>
                     <input type="text" id="upload_title" class="form-control" placeholder="タイトル">
                 </div>
-                <div class="form-group">
+                <div class="custom-switch mb-10">
+                        <input type="checkbox" id="checkbox_addImage" onchange="$('#form_timeOption').css('display', this.checked ? 'none' : 'unset')">
+                        <label for="checkbox_addImage">追加</label>
+                    </div>
+                <div class="form-group" id="form_timeOption">
                     <label class="required">時間制限</label>
                     <div class="row">
                         <select class="form-control col-8" id="select-time" onchange="selectTime(this)">

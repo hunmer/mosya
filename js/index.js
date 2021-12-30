@@ -60,7 +60,7 @@ $(function() {
     }
     var save = false;
     if (typeof(g_config.user.name) != 'string' || g_config.user.name == '') {
-        var user = prompt('input user name', '');
+        var user = prompt('名前を入力ください。', '');
         if (user == '' || user == null) {
             return;
         }
@@ -1555,7 +1555,6 @@ function doAction(dom, action, params) {
             }
             //$('#select-time').parents('.form-group').css('display', display);
             $($('select').parents('.form-group')[0]).removeClass('is-invalid');
-            $('[data-action="addTime"]').css('display', display == '' && g_cache.post != undefined ? 'unset' : 'none');
             halfmoon.toggleModal('modal-upload');
             break;
         case 'toTab':
@@ -1636,12 +1635,10 @@ function doAction(dom, action, params) {
 
         case 'addTime':
             if (g_cache.post == undefined) return;
-            var min = $('select')[0].value;
-            if (min == '') {
-                $($('select').parents('.form-group')[0]).addClass('is-invalid');
-                return;
+            var min = parseInt(prompt('何分を延長しますか？', 30));
+            if (!isNaN(min) && min > 0) {
+                queryMsg({ type: 'addTime', data: min }, true);
             }
-            queryMsg({ type: 'addTime', data: min }, true);
             break;
 
     }
@@ -2286,9 +2283,8 @@ function closeModal(id, type, fun) {
 }
 
 function parsePost(data, save = true) {
-        $('#btn_upload').html('アップロードする');
-
-    if(g_cache.post && g_cache.post.imgs == data.imgs){ // 没有变化
+    $('#btn_upload').html('アップロードする');
+    if(g_cache.post && g_cache.post.imgs.length === data.imgs.length && g_cache.post.imgs.sort().toString() === data.imgs.sort().toString()){ // 没有变化
         return;
     }
     if(data.user == g_config.user.name){ // 清除上传
@@ -2334,47 +2330,12 @@ function parsePost(data, save = true) {
         $('[data-action="finish"]').show();
         //reviceMsg({ type: 'msg', user: data.user, msg: '<img class="thumb" data-action="previewImage" src="' + g_cache.post.img + '">' });
        $('#div_mainImg').css('height', '');
-
-        //loadImage(g_cache.post.img);
-        
     //}
     $('#cnt1').hide();
         enableTimer(() => {
             return g_cache.post.time--;
         });
     
-}
-
-function loadImage(src, anime = true, dsrc = ''){
-	var img = new Image();
-	img.src = src;
-	// 
-    imagesLoaded(img).on('progress', function(instance, image) {
-        if (image.isLoaded) {
-        		var w = image.img.width;
-        		var h = image.img.height;
-        		var data = {
-        			src: src,
-        			naturalWidth: w,
-        			naturalHeight: h,
-        		}
-        		var mx = $('#div_mainImg').width();
-        		if(w > mx){
-        			w = mx;
-        		}
-        		$('#image').attr(data).width(w).show();
-            // $('#div_mainImg').height($('#image').height());
-            setTimeout(() => {drawBoard()}, 1500);
-        }else
-        if(dsrc){
-            loadImage(dsrc, anime);
-        }
-    });
-    if (_viewer && _viewer.isShown) {
-        _viewer.image.src = src;
-    }else{
-        if(anime) addAnimation($('#image'), 'zoomIn');
-    }
 }
 
 function enableTimer(run, callback){
